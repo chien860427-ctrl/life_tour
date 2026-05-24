@@ -1,0 +1,1710 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DottedSign 文件範本 Demo</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { width: 100%; height: 100%; font-family: -apple-system, BlinkMacSystemFont, 'PingFang TC', 'Noto Sans TC', sans-serif; }
+
+  .app { background: #f0f0f0; min-height: 100vh; width: 100%; flex-direction: column; }
+  .topbar { background: #fff; border-bottom: 0.5px solid #e8e8e8; display: flex; align-items: center; justify-content: space-between; padding: 0 28px; height: 56px; flex-shrink: 0; }
+  .topbar-left { display: flex; align-items: center; gap: 8px; font-size: 15px; font-weight: 500; color: #000; }
+  .topbar-right { display: flex; gap: 10px; }
+  .main-layout { display: flex; flex: 1; min-height: 0; }
+  .sidebar { width: 240px; background: #fff; border-right: 0.5px solid #e8e8e8; flex-shrink: 0; display: flex; flex-direction: column; }
+  .sidebar-group { border-bottom: 0.5px solid #e8e8e8; }
+  .sidebar-group-header { display: flex; align-items: center; justify-content: space-between; padding: 11px 18px; font-size: 13px; color: #000; }
+  .sidebar-group-header a { color: #5856D6; font-size: 13px; text-decoration: none; }
+  .sidebar-group-header .label { display: flex; align-items: center; gap: 5px; }
+  .role-selector { margin: 10px 14px; background: #fff; border: 1px solid #d0d0d0; border-radius: 8px; padding: 8px 12px; display: flex; align-items: center; justify-content: space-between; cursor: pointer; }
+  .role-dot { width: 30px; height: 30px; border-radius: 50%; background: #1BBFE0; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .field-list { padding: 4px 0 8px; }
+  .field-item { display: flex; align-items: center; gap: 10px; padding: 8px 18px; font-size: 14px; color: #000; cursor: pointer; }
+  .field-item:hover { background: #f5f5f5; }
+  .field-icon { width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .field-icon svg { width: 17px; height: 17px; }
+  .doc-area { flex: 1; display: flex; align-items: center; justify-content: center; padding: 32px; position: relative; background: #f0f0f0; overflow: auto; }
+  .doc-paper { background: #fff; width: 100%; max-width: 860px; height: calc(100vh - 56px - 64px); min-height: 500px; border: 0.5px solid #ddd; border-radius: 4px; position: relative; box-shadow: 0 2px 12px rgba(0,0,0,0.07); }
+  .sig-block { position: absolute; bottom: 120px; right: 80px; width: 240px; height: 66px; background: #D6F0F5; border: 1.5px dashed #87CEDC; border-radius: 4px; display: flex; align-items: center; justify-content: center; }
+  .sig-label { font-size: 14px; color: #5BA0AC; }
+  .sig-asterisk { position: absolute; top: 6px; right: 8px; color: #E06070; font-size: 14px; }
+
+  .overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); display: none; align-items: center; justify-content: center; z-index: 100; }
+  .overlay.active { display: flex; }
+  .modal { background: #ffffff; border-radius: 12px; width: 460px; max-height: 92vh; overflow-y: auto; box-shadow: 0 8px 32px rgba(0,0,0,0.18); color-scheme: light; color: #000; }
+  .modal-header { padding: 16px 22px 12px; position: relative; text-align: center; }
+  .modal-title { font-weight: 500; color: #000; font-size: 14px; }
+  .modal-close { position: absolute; top: 14px; left: 18px; background: none; border: none; cursor: pointer; color: #999; line-height: 1; padding: 0; font-size: 18px; }
+  .modal-section-header { background: #f5f5f5; padding: 9px 22px; font-weight: 500; color: #000; font-size: 12px; display: flex; align-items: center; gap: 6px; border-top: 0.5px solid #e8e8e8; border-bottom: 0.5px solid #e8e8e8; }
+  .modal-body { padding: 16px 22px 10px; background: #fff; }
+  .field-label { color: #000; font-size: 12px; margin-bottom: 6px; display: flex; align-items: center; gap: 5px; }
+  .role-box-single { border: 1px solid #e0e0e0; border-radius: 8px; display: flex; align-items: center; gap: 10px; padding: 10px 14px; background: #fff; }
+  .role-avatar { width: 30px; height: 30px; border-radius: 50%; background: #1BBFE0; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .manage-link { color: #5856D6; font-size: 12px; text-decoration: none; display: inline-block; margin-top: 8px; margin-bottom: 4px; }
+  .form-field { margin-bottom: 16px; }
+  .form-field label { font-size: 12px; color: #000; display: flex; align-items: center; gap: 5px; margin-bottom: 6px; }
+  .form-input { width: 100%; border: 1px solid #d0d0d0; border-radius: 8px; padding: 9px 13px; font-size: 12px; background-color: #ffffff !important; color: #000000 !important; outline: none; font-family: inherit; -webkit-text-fill-color: #000000; color-scheme: light; }
+  .form-input::placeholder { color: #bbb; -webkit-text-fill-color: #bbb; }
+  #tplPwdInput::placeholder { color: #ccc; -webkit-text-fill-color: #ccc; }
+  #reviewPwdInput::placeholder { color: #ccc; -webkit-text-fill-color: #ccc; }
+  .form-input:focus { border-color: #5856D6; box-shadow: 0 0 0 2px rgba(88,86,214,0.1); }
+  .form-input.error { border-color: #E53535 !important; box-shadow: none !important; }
+  .form-select { width: 100%; border: 1px solid #d0d0d0; border-radius: 8px; padding: 9px 30px 9px 13px; font-size: 12px; background: #fff; color: #bbb; outline: none; font-family: inherit; appearance: none; -webkit-appearance: none; color-scheme: light; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23999' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 10px center; }
+  .checkbox-row { display: flex; align-items: center; gap: 10px; margin-top: 4px; cursor: pointer; }
+  .custom-check { width: 20px; height: 20px; border-radius: 5px; border: 1.5px solid #ccc; background: #fff; display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: background 0.15s, border-color 0.15s; }
+  .custom-check.checked { background: #4A9EF5; border-color: #4A9EF5; }
+  .custom-check svg { display: none; }
+  .custom-check.checked svg { display: block; }
+  .checkbox-label { font-size: 12px; color: #000; user-select: none; }
+  .tooltip-wrap { position: relative; display: inline-flex; align-items: center; }
+  .tooltip-icon { width: 14px; height: 14px; border-radius: 50%; background: #bbb; color: #fff; font-size: 9px; font-weight: 600; display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0; user-select: none; }
+  .tooltip-box { display: none; position: absolute; left: 18px; top: -4px; background: #333; color: #fff; border-radius: 6px; padding: 6px 10px; z-index: 200; line-height: 1.5; width: 230px; white-space: normal; font-size: 12px; }
+  .tooltip-wrap:hover .tooltip-box, .tooltip-wrap.active .tooltip-box { display: block; }
+  .error-msg { color: #E53535; line-height: 1.4; font-size: 12px; display: none; margin-top: 4px; }
+  .error-msg.show { display: block; }
+  .modal-footer { padding: 12px 22px 16px; display: flex; justify-content: flex-end; gap: 10px; border-top: 0.5px solid #eee; background: #fff; align-items: center; }
+  .btn-cancel-modal { background: #fff; border: 1px solid #ccc; border-radius: 6px; padding: 7px 18px; cursor: pointer; color: #222; font-family: inherit; font-size: 12px; }
+  .btn-confirm-modal { background: #6C6FDE; border: none; border-radius: 10px; padding: 10px 30px; color: #fff; cursor: pointer; font-weight: 500; font-family: inherit; font-size: 12px; }
+
+  .success-toast { position: fixed; bottom: 32px; left: 50%; transform: translateX(-50%); background: #34C759; color: white; border-radius: 8px; padding: 12px 24px; font-size: 14px; display: none; align-items: center; gap: 10px; white-space: nowrap; z-index: 200; }
+  .success-toast.active { display: flex; }
+
+  .page { display: none !important; }
+  .page.active { display: flex !important; flex-direction: column; min-height: 100vh; }
+
+  .tpl-topbar { border-bottom: 0.5px solid #e8e8e8; padding: 0 28px; height: 56px; display: flex; align-items: center; background: #fff; flex-shrink: 0; }
+  .tpl-nav { display: flex; gap: 32px; margin-left: 40px; }
+  .tpl-nav a { font-size: 14px; text-decoration: none; color: #888; }
+  .tpl-nav a.active { color: #000; font-weight: 500; }
+  .tpl-layout { display: flex; flex: 1; }
+  .tpl-sidebar { width: 200px; border-right: 0.5px solid #e8e8e8; padding: 24px 0; flex-shrink: 0; }
+  .tpl-sidebar a { display: block; padding: 9px 24px; font-size: 14px; color: #888; text-decoration: none; }
+  .tpl-sidebar a.active { background: #f0f0ff; color: #5856D6; border-right: 2px solid #5856D6; font-weight: 500; }
+
+  .tpl-card-wrap { display: flex; flex-direction: column; align-items: center; cursor: pointer; position: relative; }
+  .tpl-card { border: 1px solid #ddd; border-radius: 10px; width: 160px; height: 210px; background: #fff; position: relative; overflow: visible; box-shadow: 0 1px 6px rgba(0,0,0,0.07); }
+  .tpl-card.selected { border: 2px solid #4A9EF5; box-shadow: 0 0 0 3px rgba(74,158,245,0.15); }
+  .tpl-card-dots { position: absolute; top: 10px; right: 12px; display: flex; gap: 3px; cursor: pointer; z-index: 10; }
+  .tpl-card-dots span { width: 4px; height: 4px; border-radius: 50%; background: #555; display: block; }
+  .tpl-card-label { font-size: 14px; margin-top: 10px; color: #000; text-align: center; }
+  .tpl-card-new { border: 1px dashed #ccc; border-radius: 10px; width: 160px; height: 210px; display: flex; align-items: center; justify-content: center; background: #fafafa; cursor: pointer; }
+  .tpl-card-new span { color: #5856D6; font-size: 15px; font-weight: 500; }
+
+  .ctx-menu { position: absolute; top: 40px; right: -10px; background: #fff; border-radius: 12px; box-shadow: 0 4px 24px rgba(0,0,0,0.15); width: 190px; z-index: 300; overflow: hidden; display: none; }
+  .ctx-menu.show { display: block; }
+  .ctx-item { display: flex; align-items: center; gap: 12px; padding: 12px 18px; font-size: 14px; color: #000; cursor: pointer; }
+  .ctx-item:hover { background: #f5f5f5; }
+  .ctx-item svg { width: 18px; height: 18px; flex-shrink: 0; }
+  /* ===== Completed documents grid (added) ===== */
+  .doc-grid { display:grid; grid-template-columns:repeat(5, minmax(0,1fr)); gap:16px; padding:4px 28px 28px; }
+  .doc-card { background:#fff; border-radius:10px; box-shadow:0 3px 12px rgba(0,0,0,0.12); padding:16px 16px 14px; }
+  .doc-card-top { display:flex; align-items:flex-start; gap:12px; position:relative; }
+  .doc-thumb { position:relative; width:48px; height:60px; flex-shrink:0; }
+  .doc-thumb-inner { width:100%; height:100%; background:#fff; border:1px solid #e0e0e0; border-radius:4px; padding:6px 5px; display:flex; flex-direction:column; gap:3px; }
+  .doc-thumb-inner i { display:block; height:2px; background:#e6e6ea; border-radius:1px; }
+  .doc-thumb-inner i:nth-child(1){ width:90%; background:#d3d3da; }
+  .doc-thumb-inner i:nth-child(3){ width:70%; }
+  .doc-thumb-inner i:nth-child(5){ width:55%; }
+  .doc-lock { position:absolute; top:-6px; left:-6px; width:18px; height:18px; border-radius:50%; background:#5f636e; border:2px solid #fff; display:flex; align-items:center; justify-content:center; }
+  .doc-lock svg { width:9px; height:9px; display:block; }
+  .doc-meta { flex:1; min-width:0; }
+  .doc-name { font-size:15px; font-weight:600; color:#000; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .doc-date { font-size:12px; color:#aaa; margin-top:3px; }
+  .doc-pw-row { display:flex; align-items:center; gap:6px; margin-top:4px; }
+  .doc-pw { font-size:12px; color:#aaa; letter-spacing:2px; font-family:ui-monospace,Menlo,monospace; }
+  .doc-pw.shown { letter-spacing:0.5px; color:#666; }
+  .doc-eye { border:none; background:transparent; padding:0; margin:0; cursor:pointer; color:#aaa; display:inline-flex; align-items:center; line-height:0; }
+  .doc-eye svg { width:15px; height:15px; display:block; }
+  .doc-eye.active { color:#5856D6; }
+  .doc-dots { position:absolute; top:2px; right:0; display:flex; gap:3px; cursor:pointer; }
+  .doc-dots span { width:4px; height:4px; border-radius:50%; background:#888; display:block; }
+  .doc-flow { position:relative; display:flex; justify-content:space-between; margin-top:14px; }
+  .doc-line { position:absolute; left:32px; right:32px; top:38px; height:2.5px; background:#5856D6; z-index:0; }
+  .doc-node { position:relative; z-index:1; display:flex; flex-direction:column; align-items:center; width:64px; }
+  .doc-lbl { font-size:11px; color:#888; height:16px; line-height:16px; white-space:nowrap; }
+  .doc-lbl.done { color:#16b8a3; }
+  .doc-ava { width:42px; height:42px; border-radius:50%; background:#b2d8e8; border:2px solid #fff; overflow:hidden; display:flex; align-items:center; justify-content:center; margin:4px 0; }
+  .doc-ava.photo { background:#5b8f6f; }
+  .doc-ava.gray { background:#d9dbe0; }
+  .doc-nm { font-size:11px; color:#555; white-space:nowrap; }
+  .doc-nm.muted { color:#aaa; }
+  .doc-lock.has-tip { cursor:help; }
+  .doc-pw-tip { position:absolute; bottom:calc(100% + 9px); left:50%; transform:translateX(-50%); background:#2b2f3a; color:#fff; font-size:12px; font-family:ui-monospace,Menlo,monospace; letter-spacing:1px; padding:5px 10px; border-radius:7px; white-space:nowrap; box-shadow:0 4px 12px rgba(0,0,0,0.28); display:none; z-index:60; pointer-events:none; }
+  .doc-pw-tip::after { content:""; position:absolute; top:100%; left:50%; transform:translateX(-50%); border:5px solid transparent; border-top-color:#2b2f3a; }
+  .doc-lock.has-tip:hover .doc-pw-tip { display:block; }
+</style>
+</head>
+<body>
+
+<!-- Lobby Page -->
+<div id="pageLobby" class="page active" style="flex-direction:column;min-height:100vh;background:#fff;">
+  <div style="border-bottom:0.5px solid #e8e8e8;padding:0 28px;height:56px;display:flex;align-items:center;background:#fff;justify-content:space-between;">
+    <div style="display:flex;align-items:center;cursor:pointer;" onclick="goLobby()">
+      <img src="https://www.dottedsign.com/images/logo.svg" onerror="this.outerHTML='<span style=\'font-size:20px;font-weight:600;color:#111;\'>DottedSign</span>'" style="height:28px;" alt="DottedSign">
+    </div>
+    <nav style="display:flex;gap:32px;position:absolute;left:50%;transform:translateX(-50%);">
+      <a href="#" style="font-size:14px;font-weight:600;color:#1a1a2e;text-decoration:none;border-bottom:2px solid #1a1a2e;padding-bottom:2px;">我的文件</a>
+      <a href="#" onclick="goPage4(event)" style="font-size:14px;color:#888;text-decoration:none;">文件範本</a>
+      <a href="#" style="font-size:14px;color:#888;text-decoration:none;">公開表單</a>
+    </nav>
+    <div style="display:flex;align-items:center;gap:16px;">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#555" stroke-width="1.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#555" stroke-width="1.5"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+      <div style="width:36px;height:36px;background:#1BBFE0;border-radius:50%;display:flex;align-items:center;justify-content:center;"><svg width="18" height="18" viewBox="0 0 24 24" fill="white"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg></div>
+    </div>
+  </div>
+
+  <!-- Tab bar -->
+  <div style="border-bottom:0.5px solid #e8e8e8;display:flex;justify-content:center;background:#fff;">
+    <div style="display:flex;flex-direction:column;align-items:center;padding:12px 12px;cursor:pointer;border-bottom:2.5px solid transparent;position:relative;min-width:80px;">
+      <span id="lobbyCount1" style="font-size:22px;font-weight:600;color:#333;line-height:1.2;">251</span>
+      <span style="font-size:12px;color:#999;margin-top:3px;white-space:nowrap;">待自己簽署</span>
+    </div>
+    <div style="display:flex;flex-direction:column;align-items:center;padding:12px 12px;cursor:pointer;border-bottom:2.5px solid transparent;min-width:80px;">
+      <span style="font-size:22px;font-weight:400;color:#555;line-height:1.2;">92</span>
+      <span style="font-size:12px;color:#999;margin-top:3px;white-space:nowrap;">待他人簽署</span>
+    </div>
+    <div style="display:flex;flex-direction:column;align-items:center;padding:12px 12px;cursor:pointer;border-bottom:2.5px solid #5856D6;min-width:80px;">
+      <span style="font-size:22px;font-weight:600;color:#16b8a3;line-height:1.2;">1209</span>
+      <span style="font-size:12px;color:#16b8a3;margin-top:3px;white-space:nowrap;">已完成</span>
+    </div>
+    <div style="display:flex;flex-direction:column;align-items:center;padding:12px 12px;cursor:pointer;border-bottom:2.5px solid transparent;min-width:80px;">
+      <span style="font-size:22px;font-weight:400;color:#555;line-height:1.2;">74</span>
+      <span style="font-size:12px;color:#999;margin-top:3px;white-space:nowrap;">已取消</span>
+    </div>
+    <div style="display:flex;flex-direction:column;align-items:center;padding:12px 12px;cursor:pointer;border-bottom:2.5px solid transparent;min-width:80px;">
+      <span style="font-size:22px;font-weight:400;color:#555;line-height:1.2;">52</span>
+      <span style="font-size:12px;color:#999;margin-top:3px;white-space:nowrap;">草稿</span>
+    </div>
+    <div style="display:flex;flex-direction:column;align-items:center;padding:12px 12px;cursor:pointer;border-bottom:2.5px solid transparent;min-width:80px;">
+      <span style="font-size:22px;font-weight:400;color:#555;line-height:1.2;">0</span>
+      <span style="font-size:12px;color:#999;margin-top:3px;white-space:nowrap;">待自己重簽</span>
+    </div>
+  </div>
+
+  <!-- Content area -->
+  <div style="flex:1;background:#edeef2;position:relative;display:flex;flex-direction:column;">
+    <!-- Toolbar -->
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 28px;">
+      <div style="border:1px solid #ddd;border-radius:6px;padding:7px 14px;background:#fff;display:flex;align-items:center;gap:8px;min-width:180px;cursor:pointer;">
+        <span style="font-size:13px;color:#333;">全部</span>
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#999" stroke-width="2" style="margin-left:auto;"><polyline points="6 9 12 15 18 9"/></svg>
+      </div>
+      <div style="display:flex;align-items:center;gap:16px;">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#555" stroke-width="1.8"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6" stroke-width="2.5"/><line x1="3" y1="12" x2="3.01" y2="12" stroke-width="2.5"/><line x1="3" y1="18" x2="3.01" y2="18" stroke-width="2.5"/></svg>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#555" stroke-width="1.8"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-5"/></svg>
+        <div style="position:relative;">
+          <!-- + button -->
+          <div id="plusBtn" onclick="toggleSigningModal()" style="width:40px;height:40px;border-radius:50%;background:#5856D6;display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 2px 8px rgba(88,86,214,0.35);">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          </div>
+          <!-- dropdown anchored to + button -->
+          <div id="signingDropdown" style="display:none;position:absolute;top:calc(100% + 10px);right:0;z-index:500;flex-direction:column;align-items:flex-end;">
+            <!-- triangle -->
+            <div style="width:0;height:0;border-left:8px solid transparent;border-right:8px solid transparent;border-bottom:10px solid #fff;margin-right:11px;filter:drop-shadow(0 -1px 2px rgba(0,0,0,0.08));"></div>
+            <!-- card -->
+            <div style="background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.15);width:280px;">
+              <div onclick="goPage1()" style="display:flex;align-items:center;gap:14px;padding:16px 20px;cursor:pointer;border-bottom:0.5px solid #eee;">
+                <div style="width:52px;height:52px;flex-shrink:0;display:flex;align-items:center;justify-content:center;">
+                  <svg width="48" height="48" viewBox="0 0 60 60" fill="none"><ellipse cx="30" cy="50" rx="18" ry="5" fill="#e8eaf6" opacity="0.5"/><rect x="8" y="20" width="28" height="34" rx="3" fill="#e8eaf6"/><path d="M20 38 Q24 30 28 36 Q32 42 36 28" stroke="#9fa8da" stroke-width="2" fill="none" stroke-linecap="round"/><circle cx="14" cy="26" r="2" fill="#9fa8da"/></svg>
+                </div>
+                <div><div style="font-size:15px;font-weight:600;color:#111;margin-bottom:3px;">自己簽署</div><div style="font-size:12px;color:#aaa;">你是文件的唯一簽署者</div></div>
+              </div>
+              <div onclick="goUpload()" style="display:flex;align-items:center;gap:14px;padding:16px 20px;cursor:pointer;border-bottom:0.5px solid #eee;">
+                <div style="width:52px;height:52px;flex-shrink:0;display:flex;align-items:center;justify-content:center;">
+                  <svg width="48" height="48" viewBox="0 0 60 60" fill="none"><rect x="14" y="18" width="28" height="34" rx="3" fill="#e8eaf6"/><rect x="18" y="24" width="20" height="3" rx="1.5" fill="#9fa8da"/><rect x="18" y="30" width="20" height="3" rx="1.5" fill="#9fa8da"/><rect x="18" y="36" width="14" height="3" rx="1.5" fill="#9fa8da"/><circle cx="42" cy="18" r="8" fill="#c5cae9"/><circle cx="42" cy="15" r="3" fill="#7986cb"/><path d="M36 24c0-3.3 2.7-6 6-6s6 2.7 6 6" fill="#7986cb"/></svg>
+                </div>
+                <div><div style="font-size:15px;font-weight:600;color:#111;margin-bottom:3px;">邀請他人簽署</div><div style="font-size:12px;color:#aaa;">指派簽署欄位給其他簽署人</div></div>
+              </div>
+              <div onclick="goPage1()" style="display:flex;align-items:center;gap:14px;padding:16px 20px;cursor:pointer;border-bottom:0.5px solid #eee;">
+                <div style="width:52px;height:52px;flex-shrink:0;display:flex;align-items:center;justify-content:center;">
+                  <svg width="48" height="48" viewBox="0 0 60 60" fill="none"><rect x="10" y="22" width="26" height="30" rx="3" fill="#c5cae9"/><rect x="18" y="16" width="26" height="30" rx="3" fill="#e8eaf6"/><rect x="22" y="22" width="16" height="2.5" rx="1.2" fill="#9fa8da"/><rect x="22" y="27" width="16" height="2.5" rx="1.2" fill="#9fa8da"/><rect x="22" y="32" width="10" height="2.5" rx="1.2" fill="#9fa8da"/></svg>
+                </div>
+                <div><div style="font-size:15px;font-weight:600;color:#111;margin-bottom:3px;">信封簽署</div><div style="font-size:12px;color:#aaa;line-height:1.4;">指派一份信封含多份文件給相同簽署人</div></div>
+              </div>
+              <div onclick="goPage1()" style="display:flex;align-items:center;gap:14px;padding:16px 20px;cursor:pointer;">
+                <div style="width:52px;height:52px;flex-shrink:0;display:flex;align-items:center;justify-content:center;">
+                  <svg width="48" height="48" viewBox="0 0 60 60" fill="none"><ellipse cx="30" cy="52" rx="16" ry="4" fill="#e8eaf6" opacity="0.6"/><rect x="16" y="24" width="28" height="22" rx="3" fill="#e8eaf6"/><circle cx="30" cy="14" r="8" fill="#c5cae9"/><circle cx="30" cy="11" r="3" fill="#7986cb"/><path d="M24 20c0-3.3 2.7-6 6-6s6 2.7 6 6" fill="#7986cb"/><rect x="22" y="30" width="16" height="2" rx="1" fill="#9fa8da"/><rect x="22" y="35" width="10" height="2" rx="1" fill="#9fa8da"/></svg>
+                </div>
+                <div><div style="font-size:15px;font-weight:600;color:#111;margin-bottom:3px;">臨櫃簽署</div><div style="font-size:12px;color:#aaa;">現場使用範本簽署</div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- Completed documents grid -->
+    <div id="docGrid" class="doc-grid">
+      <div class="doc-card"><div class="doc-card-top"><div class="doc-thumb"><div class="doc-thumb-inner"><i></i><i></i><i></i><i></i><i></i></div><div class="doc-lock" title="此文件已加密"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></div></div><div class="doc-meta"><div class="doc-name">郵政重複</div><div class="doc-date">2026-05-21, 18:24:40</div><div class="doc-pw-row"><span class="doc-pw" data-pw="P@ssw0rd" data-mask="********">********</span><button class="doc-eye" type="button" aria-label="長按顯示密碼"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button></div></div><div class="doc-dots"><span></span><span></span><span></span></div></div><div class="doc-flow"><div class="doc-line"></div><div class="doc-node"><span class="doc-lbl ">已傳送</span><div class="doc-ava"><svg width="28" height="28" viewBox="0 0 60 60" fill="none"><ellipse cx="30" cy="58" rx="22" ry="10" fill="#7ecde8" opacity="0.5"/><path d="M10 40 Q15 20 30 18 Q45 20 50 40 L50 55 Q40 60 20 55 Z" fill="#5bbcd6"/><circle cx="30" cy="18" r="12" fill="#7ecde8"/><circle cx="24" cy="16" r="3" fill="white" opacity="0.6"/></svg></div><span class="doc-nm ">Me</span></div><div class="doc-node"><span class="doc-lbl done">已簽署</span><div class="doc-ava photo"><svg width="42" height="42" viewBox="0 0 42 42"><rect width="42" height="42" fill="#5b8f6f"/><circle cx="30" cy="13" r="5" fill="#e8d98a"/><path d="M0 42 L13 25 L22 34 L31 20 L42 33 L42 42 Z" fill="#3f6b4f"/></svg></div><span class="doc-nm ">jenny.shih</span></div></div></div>
+      <div class="doc-card"><div class="doc-card-top"><div class="doc-thumb"><div class="doc-thumb-inner"><i></i><i></i><i></i><i></i><i></i></div><div class="doc-lock has-tip" title="移到鎖頭可查看密碼"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg><div class="doc-pw-tip">Api#2025</div></div></div><div class="doc-meta"><div class="doc-name">v1 api 建立任務2</div><div class="doc-date">2026-05-21, 13:40:55</div></div><div class="doc-dots"><span></span><span></span><span></span></div></div><div class="doc-flow"><div class="doc-line"></div><div class="doc-node"><span class="doc-lbl ">已傳送</span><div class="doc-ava"><svg width="28" height="28" viewBox="0 0 60 60" fill="none"><ellipse cx="30" cy="58" rx="22" ry="10" fill="#7ecde8" opacity="0.5"/><path d="M10 40 Q15 20 30 18 Q45 20 50 40 L50 55 Q40 60 20 55 Z" fill="#5bbcd6"/><circle cx="30" cy="18" r="12" fill="#7ecde8"/><circle cx="24" cy="16" r="3" fill="white" opacity="0.6"/></svg></div><span class="doc-nm ">Me</span></div><div class="doc-node"><span class="doc-lbl done">已簽署</span><div class="doc-ava"><svg width="28" height="28" viewBox="0 0 60 60" fill="none"><ellipse cx="30" cy="58" rx="22" ry="10" fill="#7ecde8" opacity="0.5"/><path d="M10 40 Q15 20 30 18 Q45 20 50 40 L50 55 Q40 60 20 55 Z" fill="#5bbcd6"/><circle cx="30" cy="18" r="12" fill="#7ecde8"/><circle cx="24" cy="16" r="3" fill="white" opacity="0.6"/></svg></div><span class="doc-nm ">Me</span></div></div></div>
+      <div class="doc-card"><div class="doc-card-top"><div class="doc-thumb"><div class="doc-thumb-inner"><i></i><i></i><i></i><i></i><i></i></div><div class="doc-lock" title="此文件已加密"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></div></div><div class="doc-meta"><div class="doc-name">v1 api 建立任務</div><div class="doc-date">2026-05-21, 13:36:55</div><div class="doc-pw-row"><span class="doc-pw" data-pw="Tr7!Gp2@Wq9#Lx4$Vb6%" data-mask="********************">********************</span><button class="doc-eye" type="button" aria-label="長按顯示密碼"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button></div></div><div class="doc-dots"><span></span><span></span><span></span></div></div><div class="doc-flow"><div class="doc-line"></div><div class="doc-node"><span class="doc-lbl ">已傳送</span><div class="doc-ava"><svg width="28" height="28" viewBox="0 0 60 60" fill="none"><ellipse cx="30" cy="58" rx="22" ry="10" fill="#7ecde8" opacity="0.5"/><path d="M10 40 Q15 20 30 18 Q45 20 50 40 L50 55 Q40 60 20 55 Z" fill="#5bbcd6"/><circle cx="30" cy="18" r="12" fill="#7ecde8"/><circle cx="24" cy="16" r="3" fill="white" opacity="0.6"/></svg></div><span class="doc-nm ">Me</span></div><div class="doc-node"><span class="doc-lbl done">已簽署</span><div class="doc-ava"><svg width="28" height="28" viewBox="0 0 60 60" fill="none"><ellipse cx="30" cy="58" rx="22" ry="10" fill="#7ecde8" opacity="0.5"/><path d="M10 40 Q15 20 30 18 Q45 20 50 40 L50 55 Q40 60 20 55 Z" fill="#5bbcd6"/><circle cx="30" cy="18" r="12" fill="#7ecde8"/><circle cx="24" cy="16" r="3" fill="white" opacity="0.6"/></svg></div><span class="doc-nm ">Me</span></div></div></div>
+      <div class="doc-card"><div class="doc-card-top"><div class="doc-thumb"><div class="doc-thumb-inner"><i></i><i></i><i></i><i></i><i></i></div><div class="doc-lock has-tip" title="移到鎖頭可查看密碼"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg><div class="doc-pw-tip">Zk5$Mw8%Rj3+Hd1*Qs0!</div></div></div><div class="doc-meta"><div class="doc-name">放大縮小</div><div class="doc-date">2026-05-21, 10:35:58</div></div><div class="doc-dots"><span></span><span></span><span></span></div></div><div class="doc-flow"><div class="doc-line"></div><div class="doc-node"><span class="doc-lbl ">已傳送</span><div class="doc-ava"><svg width="28" height="28" viewBox="0 0 60 60" fill="none"><ellipse cx="30" cy="58" rx="22" ry="10" fill="#7ecde8" opacity="0.5"/><path d="M10 40 Q15 20 30 18 Q45 20 50 40 L50 55 Q40 60 20 55 Z" fill="#5bbcd6"/><circle cx="30" cy="18" r="12" fill="#7ecde8"/><circle cx="24" cy="16" r="3" fill="white" opacity="0.6"/></svg></div><span class="doc-nm ">Me</span></div><div class="doc-node"><span class="doc-lbl done">已簽署</span><div class="doc-ava"><svg width="28" height="28" viewBox="0 0 60 60" fill="none"><ellipse cx="30" cy="58" rx="22" ry="10" fill="#7ecde8" opacity="0.5"/><path d="M10 40 Q15 20 30 18 Q45 20 50 40 L50 55 Q40 60 20 55 Z" fill="#5bbcd6"/><circle cx="30" cy="18" r="12" fill="#7ecde8"/><circle cx="24" cy="16" r="3" fill="white" opacity="0.6"/></svg></div><span class="doc-nm ">Me</span></div></div></div>
+      <div class="doc-card"><div class="doc-card-top"><div class="doc-thumb"><div class="doc-thumb-inner"><i></i><i></i><i></i><i></i><i></i></div><div class="doc-lock" title="此文件已加密"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></div></div><div class="doc-meta"><div class="doc-name">v1密碼1</div><div class="doc-date">2026-05-20, 18:31:36</div><div class="doc-pw-row"><span class="doc-pw" data-pw="P@ssw0rd" data-mask="********">********</span><button class="doc-eye" type="button" aria-label="長按顯示密碼"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button></div></div><div class="doc-dots"><span></span><span></span><span></span></div></div><div class="doc-flow"><div class="doc-line"></div><div class="doc-node"><span class="doc-lbl ">已傳送</span><div class="doc-ava"><svg width="28" height="28" viewBox="0 0 60 60" fill="none"><ellipse cx="30" cy="58" rx="22" ry="10" fill="#7ecde8" opacity="0.5"/><path d="M10 40 Q15 20 30 18 Q45 20 50 40 L50 55 Q40 60 20 55 Z" fill="#5bbcd6"/><circle cx="30" cy="18" r="12" fill="#7ecde8"/><circle cx="24" cy="16" r="3" fill="white" opacity="0.6"/></svg></div><span class="doc-nm ">Me</span></div><div class="doc-node"><span class="doc-lbl done">已簽署</span><div class="doc-ava"><svg width="28" height="28" viewBox="0 0 60 60" fill="none"><ellipse cx="30" cy="58" rx="22" ry="10" fill="#7ecde8" opacity="0.5"/><path d="M10 40 Q15 20 30 18 Q45 20 50 40 L50 55 Q40 60 20 55 Z" fill="#5bbcd6"/><circle cx="30" cy="18" r="12" fill="#7ecde8"/><circle cx="24" cy="16" r="3" fill="white" opacity="0.6"/></svg></div><span class="doc-nm ">Me</span></div></div></div>
+      <div class="doc-card"><div class="doc-card-top"><div class="doc-thumb"><div class="doc-thumb-inner"><i></i><i></i><i></i><i></i><i></i></div><div class="doc-lock" title="此文件已加密"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></div></div><div class="doc-meta"><div class="doc-name">有密碼</div><div class="doc-date">2026-05-20, 18:04:57</div><div class="doc-pw-row"><span class="doc-pw" data-pw="Secret88" data-mask="********">********</span><button class="doc-eye" type="button" aria-label="長按顯示密碼"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button></div></div><div class="doc-dots"><span></span><span></span><span></span></div></div><div class="doc-flow"><div class="doc-line"></div><div class="doc-node"><span class="doc-lbl ">已傳送</span><div class="doc-ava"><svg width="28" height="28" viewBox="0 0 60 60" fill="none"><ellipse cx="30" cy="58" rx="22" ry="10" fill="#7ecde8" opacity="0.5"/><path d="M10 40 Q15 20 30 18 Q45 20 50 40 L50 55 Q40 60 20 55 Z" fill="#5bbcd6"/><circle cx="30" cy="18" r="12" fill="#7ecde8"/><circle cx="24" cy="16" r="3" fill="white" opacity="0.6"/></svg></div><span class="doc-nm ">Me</span></div><div class="doc-node"><span class="doc-lbl done">已簽署</span><div class="doc-ava"><svg width="28" height="28" viewBox="0 0 60 60" fill="none"><ellipse cx="30" cy="58" rx="22" ry="10" fill="#7ecde8" opacity="0.5"/><path d="M10 40 Q15 20 30 18 Q45 20 50 40 L50 55 Q40 60 20 55 Z" fill="#5bbcd6"/><circle cx="30" cy="18" r="12" fill="#7ecde8"/><circle cx="24" cy="16" r="3" fill="white" opacity="0.6"/></svg></div><span class="doc-nm ">Me</span></div></div></div>
+      <div class="doc-card"><div class="doc-card-top"><div class="doc-thumb"><div class="doc-thumb-inner"><i></i><i></i><i></i><i></i><i></i></div><div class="doc-lock" title="此文件已加密"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></div></div><div class="doc-meta"><div class="doc-name">範本建立0520_3</div><div class="doc-date">2026-05-20, 18:20:08</div><div class="doc-pw-row"><span class="doc-pw" data-pw="Tpl0520!" data-mask="********">********</span><button class="doc-eye" type="button" aria-label="長按顯示密碼"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button></div></div><div class="doc-dots"><span></span><span></span><span></span></div></div><div class="doc-flow"><div class="doc-line"></div><div class="doc-node"><span class="doc-lbl ">已傳送</span><div class="doc-ava"><svg width="28" height="28" viewBox="0 0 60 60" fill="none"><ellipse cx="30" cy="58" rx="22" ry="10" fill="#7ecde8" opacity="0.5"/><path d="M10 40 Q15 20 30 18 Q45 20 50 40 L50 55 Q40 60 20 55 Z" fill="#5bbcd6"/><circle cx="30" cy="18" r="12" fill="#7ecde8"/><circle cx="24" cy="16" r="3" fill="white" opacity="0.6"/></svg></div><span class="doc-nm ">Me</span></div><div class="doc-node"><span class="doc-lbl done">已簽署</span><div class="doc-ava"><svg width="28" height="28" viewBox="0 0 60 60" fill="none"><ellipse cx="30" cy="58" rx="22" ry="10" fill="#7ecde8" opacity="0.5"/><path d="M10 40 Q15 20 30 18 Q45 20 50 40 L50 55 Q40 60 20 55 Z" fill="#5bbcd6"/><circle cx="30" cy="18" r="12" fill="#7ecde8"/><circle cx="24" cy="16" r="3" fill="white" opacity="0.6"/></svg></div><span class="doc-nm ">Me</span></div></div></div>
+      <div class="doc-card"><div class="doc-card-top"><div class="doc-thumb"><div class="doc-thumb-inner"><i></i><i></i><i></i><i></i><i></i></div><div class="doc-lock" title="此文件已加密"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></div></div><div class="doc-meta"><div class="doc-name">範本建立0520_2</div><div class="doc-date">2026-05-20, 18:16:24</div><div class="doc-pw-row"><span class="doc-pw" data-pw="Tpl0520!" data-mask="********">********</span><button class="doc-eye" type="button" aria-label="長按顯示密碼"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button></div></div><div class="doc-dots"><span></span><span></span><span></span></div></div><div class="doc-flow"><div class="doc-line"></div><div class="doc-node"><span class="doc-lbl ">已傳送</span><div class="doc-ava"><svg width="28" height="28" viewBox="0 0 60 60" fill="none"><ellipse cx="30" cy="58" rx="22" ry="10" fill="#7ecde8" opacity="0.5"/><path d="M10 40 Q15 20 30 18 Q45 20 50 40 L50 55 Q40 60 20 55 Z" fill="#5bbcd6"/><circle cx="30" cy="18" r="12" fill="#7ecde8"/><circle cx="24" cy="16" r="3" fill="white" opacity="0.6"/></svg></div><span class="doc-nm ">Me</span></div><div class="doc-node"><span class="doc-lbl done">已簽署</span><div class="doc-ava"><svg width="28" height="28" viewBox="0 0 60 60" fill="none"><ellipse cx="30" cy="58" rx="22" ry="10" fill="#7ecde8" opacity="0.5"/><path d="M10 40 Q15 20 30 18 Q45 20 50 40 L50 55 Q40 60 20 55 Z" fill="#5bbcd6"/><circle cx="30" cy="18" r="12" fill="#7ecde8"/><circle cx="24" cy="16" r="3" fill="white" opacity="0.6"/></svg></div><span class="doc-nm ">Me</span></div></div></div>
+      <div class="doc-card"><div class="doc-card-top"><div class="doc-thumb"><div class="doc-thumb-inner"><i></i><i></i><i></i><i></i><i></i></div><div class="doc-lock" title="此文件已加密"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></div></div><div class="doc-meta"><div class="doc-name">範本建立0520</div><div class="doc-date">2026-05-20, 18:14:43</div><div class="doc-pw-row"><span class="doc-pw" data-pw="Tpl0520!" data-mask="********">********</span><button class="doc-eye" type="button" aria-label="長按顯示密碼"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button></div></div><div class="doc-dots"><span></span><span></span><span></span></div></div><div class="doc-flow"><div class="doc-line"></div><div class="doc-node"><span class="doc-lbl ">已傳送</span><div class="doc-ava"><svg width="28" height="28" viewBox="0 0 60 60" fill="none"><ellipse cx="30" cy="58" rx="22" ry="10" fill="#7ecde8" opacity="0.5"/><path d="M10 40 Q15 20 30 18 Q45 20 50 40 L50 55 Q40 60 20 55 Z" fill="#5bbcd6"/><circle cx="30" cy="18" r="12" fill="#7ecde8"/><circle cx="24" cy="16" r="3" fill="white" opacity="0.6"/></svg></div><span class="doc-nm ">Me</span></div><div class="doc-node"><span class="doc-lbl done">已簽署</span><div class="doc-ava"><svg width="28" height="28" viewBox="0 0 60 60" fill="none"><ellipse cx="30" cy="58" rx="22" ry="10" fill="#7ecde8" opacity="0.5"/><path d="M10 40 Q15 20 30 18 Q45 20 50 40 L50 55 Q40 60 20 55 Z" fill="#5bbcd6"/><circle cx="30" cy="18" r="12" fill="#7ecde8"/><circle cx="24" cy="16" r="3" fill="white" opacity="0.6"/></svg></div><span class="doc-nm ">Me</span></div></div></div>
+      <div class="doc-card"><div class="doc-card-top"><div class="doc-thumb"><div class="doc-thumb-inner"><i></i><i></i><i></i><i></i><i></i></div><div class="doc-lock" title="此文件已加密"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></div></div><div class="doc-meta"><div class="doc-name">郵政重複</div><div class="doc-date">2026-05-20, 15:22:45</div><div class="doc-pw-row"><span class="doc-pw" data-pw="Mail2026" data-mask="********">********</span><button class="doc-eye" type="button" aria-label="長按顯示密碼"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button></div></div><div class="doc-dots"><span></span><span></span><span></span></div></div><div class="doc-flow"><div class="doc-line"></div><div class="doc-node"><span class="doc-lbl ">已傳送</span><div class="doc-ava"><svg width="28" height="28" viewBox="0 0 60 60" fill="none"><ellipse cx="30" cy="58" rx="22" ry="10" fill="#7ecde8" opacity="0.5"/><path d="M10 40 Q15 20 30 18 Q45 20 50 40 L50 55 Q40 60 20 55 Z" fill="#5bbcd6"/><circle cx="30" cy="18" r="12" fill="#7ecde8"/><circle cx="24" cy="16" r="3" fill="white" opacity="0.6"/></svg></div><span class="doc-nm ">Me</span></div><div class="doc-node"><span class="doc-lbl done">已簽署</span><div class="doc-ava"><svg width="28" height="28" viewBox="0 0 60 60" fill="none"><ellipse cx="30" cy="58" rx="22" ry="10" fill="#7ecde8" opacity="0.5"/><path d="M10 40 Q15 20 30 18 Q45 20 50 40 L50 55 Q40 60 20 55 Z" fill="#5bbcd6"/><circle cx="30" cy="18" r="12" fill="#7ecde8"/><circle cx="24" cy="16" r="3" fill="white" opacity="0.6"/></svg></div><span class="doc-nm ">Me</span></div></div></div>
+      <div class="doc-card"><div class="doc-card-top"><div class="doc-thumb"><div class="doc-thumb-inner"><i></i><i></i><i></i><i></i><i></i></div><div class="doc-lock" title="此文件已加密"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></div></div><div class="doc-meta"><div class="doc-name">自簽憑證設定</div><div class="doc-date">2026-05-20, 15:14:50</div><div class="doc-pw-row"><span class="doc-pw" data-pw="Cert2026" data-mask="********">********</span><button class="doc-eye" type="button" aria-label="長按顯示密碼"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button></div></div><div class="doc-dots"><span></span><span></span><span></span></div></div><div class="doc-flow"><div class="doc-line"></div><div class="doc-node"><span class="doc-lbl ">已傳送</span><div class="doc-ava"><svg width="28" height="28" viewBox="0 0 60 60" fill="none"><ellipse cx="30" cy="58" rx="22" ry="10" fill="#7ecde8" opacity="0.5"/><path d="M10 40 Q15 20 30 18 Q45 20 50 40 L50 55 Q40 60 20 55 Z" fill="#5bbcd6"/><circle cx="30" cy="18" r="12" fill="#7ecde8"/><circle cx="24" cy="16" r="3" fill="white" opacity="0.6"/></svg></div><span class="doc-nm ">Me</span></div><div class="doc-node"><span class="doc-lbl done">已簽署</span><div class="doc-ava"><svg width="28" height="28" viewBox="0 0 60 60" fill="none"><ellipse cx="30" cy="58" rx="22" ry="10" fill="#7ecde8" opacity="0.5"/><path d="M10 40 Q15 20 30 18 Q45 20 50 40 L50 55 Q40 60 20 55 Z" fill="#5bbcd6"/><circle cx="30" cy="18" r="12" fill="#7ecde8"/><circle cx="24" cy="16" r="3" fill="white" opacity="0.6"/></svg></div><span class="doc-nm ">Me</span></div></div></div>
+      <div class="doc-card"><div class="doc-card-top"><div class="doc-thumb"><div class="doc-thumb-inner"><i></i><i></i><i></i><i></i><i></i></div><div class="doc-lock" title="此文件已加密"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></div></div><div class="doc-meta"><div class="doc-name">簽到一半</div><div class="doc-date">2026-01-27, 15:59:25</div><div class="doc-pw-row"><span class="doc-pw" data-pw="Half!sgn" data-mask="********">********</span><button class="doc-eye" type="button" aria-label="長按顯示密碼"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button></div></div><div class="doc-dots"><span></span><span></span><span></span></div></div><div class="doc-flow"><div class="doc-line"></div><div class="doc-node"><span class="doc-lbl ">已傳送</span><div class="doc-ava gray"></div><span class="doc-nm muted">jenny2</span></div><div class="doc-node"><span class="doc-lbl done">已簽署</span><div class="doc-ava"><svg width="28" height="28" viewBox="0 0 60 60" fill="none"><ellipse cx="30" cy="58" rx="22" ry="10" fill="#7ecde8" opacity="0.5"/><path d="M10 40 Q15 20 30 18 Q45 20 50 40 L50 55 Q40 60 20 55 Z" fill="#5bbcd6"/><circle cx="30" cy="18" r="12" fill="#7ecde8"/><circle cx="24" cy="16" r="3" fill="white" opacity="0.6"/></svg></div><span class="doc-nm ">Me</span></div><div class="doc-node"><span class="doc-lbl done">已簽署</span><div class="doc-ava photo"><svg width="42" height="42" viewBox="0 0 42 42"><rect width="42" height="42" fill="#5b8f6f"/><circle cx="30" cy="13" r="5" fill="#e8d98a"/><path d="M0 42 L13 25 L22 34 L31 20 L42 33 L42 42 Z" fill="#3f6b4f"/></svg></div><span class="doc-nm ">jenny.shih</span></div></div></div>
+    </div>
+    <!-- Content: empty by default, task card shown after submission -->
+    <div id="lobbyEmpty" style="flex:1;display:none;align-items:center;justify-content:center;flex-direction:column;gap:12px;opacity:0.4;">
+      <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#888" stroke-width="1.2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+      <span style="font-size:14px;color:#888;">目前沒有文件</span>
+    </div>
+    <!-- Task card (hidden until submission) -->
+    <div id="lobbyTaskCard" style="display:none;padding:0 28px 24px;">
+      <div style="background:#fff;border-radius:12px;box-shadow:0 1px 6px rgba(0,0,0,0.08);overflow:hidden;max-width:420px;">
+        <!-- Card top -->
+        <div style="padding:16px 16px 12px;display:flex;align-items:flex-start;gap:14px;position:relative;">
+          <!-- doc thumbnail -->
+          <div style="width:72px;height:90px;background:#fff;border:1px solid #e0e0e0;border-radius:4px;flex-shrink:0;"></div>
+          <div style="flex:1;">
+            <div style="font-size:15px;font-weight:600;color:#000;margin-bottom:4px;">契約書</div>
+            <div style="font-size:12px;color:#aaa;" id="taskCardTime">2026-04-12, 23:41:13</div>
+          </div>
+          <!-- three dots -->
+          <div style="position:absolute;top:14px;right:14px;display:flex;gap:3px;cursor:pointer;">
+            <span style="width:4px;height:4px;border-radius:50%;background:#888;display:block;"></span>
+            <span style="width:4px;height:4px;border-radius:50%;background:#888;display:block;"></span>
+            <span style="width:4px;height:4px;border-radius:50%;background:#888;display:block;"></span>
+          </div>
+        </div>
+        <!-- Divider -->
+        <div style="height:0.5px;background:#eee;margin:0 16px;"></div>
+        <!-- Status row -->
+        <div style="padding:12px 16px 16px;">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+            <span style="font-size:12px;color:#888;">已傳送</span>
+            <span style="font-size:12px;color:#5856D6;font-weight:500;">處理中</span>
+          </div>
+          <!-- Progress line with avatars -->
+          <div style="display:flex;align-items:center;gap:0;position:relative;">
+            <div style="display:flex;flex-direction:column;align-items:center;gap:4px;z-index:1;">
+              <div style="width:42px;height:42px;border-radius:50%;background:#b2d8e8;border:2px solid #fff;overflow:hidden;display:flex;align-items:center;justify-content:center;">
+                <svg width="28" height="28" viewBox="0 0 60 60" fill="none"><ellipse cx="30" cy="58" rx="22" ry="10" fill="#7ecde8" opacity="0.5"/><path d="M10 40 Q15 20 30 18 Q45 20 50 40 L50 55 Q40 60 20 55 Z" fill="#5bbcd6"/><circle cx="30" cy="18" r="12" fill="#7ecde8"/><circle cx="24" cy="16" r="3" fill="white" opacity="0.6"/></svg>
+              </div>
+              <span style="font-size:11px;color:#888;">Me</span>
+            </div>
+            <!-- line -->
+            <div style="flex:1;height:2.5px;background:#5856D6;margin-bottom:16px;"></div>
+            <div style="display:flex;flex-direction:column;align-items:center;gap:4px;z-index:1;">
+              <div style="width:42px;height:42px;border-radius:50%;background:#b2d8e8;border:2px solid #fff;overflow:hidden;display:flex;align-items:center;justify-content:center;">
+                <svg width="28" height="28" viewBox="0 0 60 60" fill="none"><ellipse cx="30" cy="58" rx="22" ry="10" fill="#7ecde8" opacity="0.5"/><path d="M10 40 Q15 20 30 18 Q45 20 50 40 L50 55 Q40 60 20 55 Z" fill="#5bbcd6"/><circle cx="30" cy="18" r="12" fill="#7ecde8"/><circle cx="24" cy="16" r="3" fill="white" opacity="0.6"/></svg>
+              </div>
+              <span style="font-size:11px;color:#888;">Me</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+</div>
+
+<!-- Upload Page -->
+<div id="pageUpload" class="page" style="flex-direction:column;min-height:100vh;background:#edeef2;">
+  <div style="background:#fff;border-bottom:0.5px solid #e8e8e8;display:flex;align-items:center;justify-content:space-between;padding:0 28px;height:56px;flex-shrink:0;">
+    <div style="display:flex;align-items:center;gap:8px;font-size:15px;font-weight:500;color:#000;">
+      untitled
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#aaa" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+    </div>
+    <div style="display:flex;gap:10px;">
+      <button onclick="goLobby()" style="background:#fff;border:1px solid #ccc;border-radius:6px;padding:7px 18px;font-size:14px;cursor:pointer;color:#222;">取消</button>
+      <button onclick="goPage1()" style="background:#5856D6;border:none;border-radius:6px;padding:7px 22px;font-size:14px;color:#fff;cursor:pointer;font-weight:500;">下一步</button>
+    </div>
+  </div>
+  <div style="flex:1;display:flex;align-items:flex-start;justify-content:center;padding:32px 48px;">
+    <div style="width:100%;max-width:1200px;">
+      <div style="font-size:18px;font-weight:700;color:#000;margin-bottom:20px;">上傳文件</div>
+      <div style="border:2px dashed #bbb;border-radius:6px;padding:80px 40px;display:flex;flex-direction:column;align-items:center;gap:22px;background:#fff;">
+        <button onclick="openFinderModal()" style="background:#fff;border:1px solid #aaa;border-radius:8px;padding:10px 28px;font-size:15px;color:#5856D6;cursor:pointer;font-weight:400;">選擇檔案</button>
+        <div style="font-size:15px;color:#666;font-weight:500;">或直接拖放檔案進來</div>
+        <div id="uploadImportSection" style="display:flex;flex-direction:column;align-items:center;gap:22px;width:100%;">
+          <div style="display:flex;align-items:center;width:100%;max-width:700px;gap:0;">
+            <div style="flex:1;height:0.5px;background:#ccc;"></div>
+            <span style="font-size:15px;color:#999;padding:0 16px;">或</span>
+            <div style="flex:1;height:0.5px;background:#ccc;"></div>
+          </div>
+          <button onclick="openTemplateModal()" onmouseenter="this.style.background='#5856D6';this.style.color='#fff';" onmouseleave="this.style.background='#fff';this.style.color='#5856D6';" style="background:#fff;border:1.5px solid #5856D6;border-radius:10px;padding:10px 32px;font-size:15px;color:#5856D6;cursor:pointer;font-weight:400;transition:background 0.15s,color 0.15s;">匯入文件範本</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Template Selector Modal -->
+<div id="templateModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:600;align-items:center;justify-content:center;">
+  <div style="background:#fff;border-radius:12px;width:780px;max-height:85vh;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 8px 32px rgba(0,0,0,0.18);">
+    <!-- header -->
+    <div style="padding:20px 24px 16px;border-bottom:0.5px solid #eee;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;">
+      <button onclick="closeTemplateModal()" style="background:none;border:none;cursor:pointer;color:#999;font-size:20px;padding:0;line-height:1;">✕</button>
+      <span style="font-size:16px;font-weight:600;color:#000;position:absolute;left:50%;transform:translateX(-50%);">選擇文件範本</span>
+      <div></div>
+    </div>
+    <!-- tags -->
+    <div style="padding:14px 24px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;flex-shrink:0;border-bottom:0.5px solid #f0f0f0;">
+      <span style="border:1px solid #ddd;border-radius:20px;padding:4px 14px;font-size:13px;color:#333;cursor:pointer;white-space:nowrap;">tag1</span>
+      <span style="border:1px solid #ddd;border-radius:20px;padding:4px 14px;font-size:13px;color:#333;cursor:pointer;white-space:nowrap;">A</span>
+      <span style="border:1px solid #ddd;border-radius:20px;padding:4px 14px;font-size:13px;color:#333;cursor:pointer;white-space:nowrap;">B</span>
+      <span style="border:1px solid #ddd;border-radius:20px;padding:4px 14px;font-size:13px;color:#333;cursor:pointer;white-space:nowrap;">C</span>
+      <span style="border:1px solid #ddd;border-radius:20px;padding:4px 14px;font-size:13px;color:#333;cursor:pointer;white-space:nowrap;max-width:180px;overflow:hidden;text-overflow:ellipsis;">123456789012345678901234567890</span>
+    </div>
+    <!-- search -->
+    <div style="padding:12px 24px;display:flex;gap:10px;flex-shrink:0;">
+      <div style="border:1px solid #ddd;border-radius:6px;padding:8px 12px;display:flex;align-items:center;gap:6px;min-width:120px;cursor:pointer;">
+        <span style="font-size:13px;color:#333;">檔案名稱</span>
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#999" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+      </div>
+      <div style="border:1px solid #ddd;border-radius:6px;padding:8px 12px;display:flex;align-items:center;gap:6px;flex:1;">
+        <input placeholder="輸入關鍵字搜尋" style="border:none;outline:none;font-size:13px;width:100%;background:transparent;" />
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#aaa" stroke-width="1.8"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      </div>
+    </div>
+    <!-- template grid -->
+    <div style="flex:1;overflow-y:auto;padding:16px 24px 0;">
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:16px;padding-bottom:16px;">
+        <!-- 契約書 card - no pre-selection -->
+        <div onclick="selectTemplate(this)" style="cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:8px;">
+          <div class="tpl-thumb" style="border:1px solid #e0e0e0;border-radius:8px;width:100%;aspect-ratio:3/4;background:#fff;overflow:hidden;display:flex;align-items:center;justify-content:center;">
+            <div style="width:85%;height:85%;background:#fff;border-radius:4px;border:0.5px solid #e0e0e0;"></div>
+          </div>
+          <span style="font-size:13px;color:#333;text-align:center;">契約書</span>
+        </div>
+      </div>
+    </div>
+    <!-- footer -->
+    <div style="padding:16px 24px;border-top:0.5px solid #eee;display:flex;justify-content:flex-end;gap:10px;flex-shrink:0;">
+      <button onclick="closeTemplateModal()" style="background:#fff;border:1px solid #ccc;border-radius:6px;padding:8px 20px;font-size:14px;cursor:pointer;color:#333;">取消</button>
+      <button onclick="useTemplate()" style="background:#5856D6;border:none;border-radius:6px;padding:8px 24px;font-size:14px;color:#fff;cursor:pointer;font-weight:500;">繼續</button>
+    </div>
+  </div>
+</div>
+
+
+<!-- Page: Template Selected -->
+<div id="pageTemplateSelected" class="page" style="flex-direction:column;min-height:100vh;background:#edeef2;">
+  <div style="background:#fff;border-bottom:0.5px solid #e8e8e8;display:flex;align-items:center;justify-content:space-between;padding:0 28px;height:56px;flex-shrink:0;">
+    <div style="display:flex;align-items:center;gap:8px;font-size:15px;font-weight:500;color:#000;">
+      契約書
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#aaa" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+    </div>
+    <div style="display:flex;gap:10px;">
+      <button onclick="goLobby()" style="background:#fff;border:1px solid #ccc;border-radius:6px;padding:7px 18px;font-size:14px;cursor:pointer;color:#222;">取消</button>
+      <button onclick="goPage1()" style="background:#5856D6;border:none;border-radius:6px;padding:7px 22px;font-size:14px;color:#fff;cursor:pointer;font-weight:500;">下一步</button>
+    </div>
+  </div>
+  <div style="flex:1;display:flex;justify-content:center;padding:32px 48px;">
+    <div style="background:#fff;border-radius:8px;width:100%;max-width:860px;padding:36px 40px;box-shadow:0 1px 4px rgba(0,0,0,0.06);">
+      <!-- back arrow -->
+      <div style="margin-bottom:20px;">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#555" stroke-width="2" style="cursor:pointer;" onclick="goUpload()"><polyline points="15 18 9 12 15 6"/></svg>
+      </div>
+
+      <!-- 上傳文件 section -->
+      <div style="font-size:17px;font-weight:700;color:#000;margin-bottom:16px;">上傳文件</div>
+
+      <!-- file info row -->
+      <div style="border:1px solid #e0e0e0;border-radius:8px;padding:12px 16px;margin-bottom:12px;">
+        <div style="font-size:14px;font-weight:500;color:#000;">契約書</div>
+        <div style="font-size:12px;color:#aaa;margin-top:2px;">單頁, 0.45 MB</div>
+      </div>
+
+      <!-- template preview -->
+      <div style="border:1px solid #e0e0e0;border-radius:8px;padding:16px;display:flex;align-items:center;gap:16px;margin-bottom:12px;">
+        <div style="width:64px;height:80px;background:#f5f5f5;border:1px solid #ddd;border-radius:4px;flex-shrink:0;"></div>
+        <div>
+          <div style="font-size:14px;font-weight:500;color:#000;">契約書</div>
+          <div style="font-size:12px;color:#aaa;margin-top:2px;">[文件範本]</div>
+        </div>
+      </div>
+
+      <!-- 抽換底稿 button -->
+      <button style="background:#fff;border:1px solid #ccc;border-radius:6px;padding:7px 16px;font-size:13px;color:#333;cursor:pointer;margin-bottom:32px;">抽換底稿</button>
+
+      <!-- 管理簽署者 section -->
+      <div style="font-size:17px;font-weight:700;color:#000;margin-bottom:16px;">管理簽署者</div>
+
+      <!-- radio row -->
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+        <div style="display:flex;align-items:center;gap:20px;">
+          <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:14px;color:#333;">
+            <div style="width:18px;height:18px;border-radius:50%;border:2px solid #5856D6;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+              <div style="width:8px;height:8px;border-radius:50%;background:#5856D6;"></div>
+            </div>
+            單次簽署
+          </label>
+          <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:14px;color:#333;">
+            <div style="width:18px;height:18px;border-radius:50%;border:2px solid #ccc;flex-shrink:0;"></div>
+            批次簽署
+          </label>
+        </div>
+        <div style="display:flex;align-items:center;gap:6px;">
+          <a href="#" style="font-size:13px;color:#5856D6;text-decoration:none;">取用常用簽署組合</a>
+          <div style="width:18px;height:18px;border-radius:50%;border:1.5px solid #aaa;display:flex;align-items:center;justify-content:center;cursor:pointer;">
+            <span style="font-size:11px;color:#aaa;font-weight:600;">?</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- signer row -->
+      <div style="border:1px solid #e0e0e0;border-radius:8px;padding:12px 14px;display:flex;align-items:center;gap:10px;">
+        <div style="width:32px;height:32px;border-radius:50%;background:#1BBFE0;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="white"><path d="M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12 2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v2.4h19.2v-2.4c0-3.2-6.4-4.8-9.6-4.8z"/></svg>
+        </div>
+        <input value="旅客" style="border:1px solid #ddd;border-radius:6px;padding:8px 12px;font-size:14px;color:#333;width:160px;outline:none;background:#fff;" />
+        <input placeholder="電子郵件" style="border:1px solid #ddd;border-radius:6px;padding:8px 12px;font-size:14px;color:#aaa;flex:1;outline:none;background:#fff;" />
+        <div style="cursor:pointer;color:#aaa;font-size:18px;letter-spacing:1px;padding:0 4px;">⋮</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- Page: After file upload - 管理簽署者 -->
+<div id="pageAfterUpload" class="page" style="flex-direction:column;min-height:100vh;background:#edeef2;">
+  <div style="background:#fff;border-bottom:0.5px solid #e8e8e8;display:flex;align-items:center;justify-content:space-between;padding:0 28px;height:56px;flex-shrink:0;">
+    <div style="display:flex;align-items:center;gap:8px;font-size:15px;font-weight:500;color:#000;">
+      test
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#aaa" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+    </div>
+    <div style="display:flex;gap:10px;">
+      <button onclick="goLobby()" style="background:#fff;border:1px solid #ccc;border-radius:6px;padding:7px 18px;font-size:14px;cursor:pointer;color:#222;">取消</button>
+      <button onclick="window._page3Flow='create';showPage('page3');" style="background:#5856D6;border:none;border-radius:6px;padding:7px 22px;font-size:14px;color:#fff;cursor:pointer;font-weight:500;">下一步</button>
+    </div>
+  </div>
+  <div style="flex:1;display:flex;justify-content:center;padding:32px 48px;">
+    <div style="background:#fff;border-radius:8px;width:100%;max-width:860px;padding:36px 40px;box-shadow:0 1px 4px rgba(0,0,0,0.06);">
+      <!-- 返回 -->
+      <div style="margin-bottom:20px;">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#555" stroke-width="2" style="cursor:pointer;" onclick="showPage('pageUpload')"><polyline points="15 18 9 12 15 6"/></svg>
+      </div>
+
+      <!-- 上傳文件 -->
+      <div style="font-size:17px;font-weight:700;color:#000;margin-bottom:16px;">上傳文件</div>
+      <div style="border:1px solid #e0e0e0;border-radius:8px;padding:12px 16px;margin-bottom:28px;">
+        <div style="font-size:14px;font-weight:500;color:#000;">test.pdf</div>
+        <div style="font-size:12px;color:#aaa;margin-top:2px;">單頁, 0.45 MB</div>
+      </div>
+
+      <!-- 管理簽署者 -->
+      <div style="font-size:17px;font-weight:700;color:#000;margin-bottom:16px;">管理簽署者</div>
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px;">
+        <div style="width:16px;height:16px;border:1.5px solid #ccc;border-radius:3px;background:#fff;flex-shrink:0;"></div>
+        <span style="font-size:13px;color:#888;">設定簽署順序</span>
+      </div>
+      <div style="border:1px solid #e0e0e0;border-radius:8px;padding:10px 12px;display:flex;align-items:center;gap:10px;margin-bottom:12px;">
+        <div style="width:32px;height:32px;border-radius:50%;background:#1BBFE0;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="white"><path d="M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12 2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v2.4h19.2v-2.4c0-3.2-6.4-4.8-9.6-4.8z"/></svg>
+        </div>
+        <input placeholder="角色" style="border:1px solid #e0e0e0;border-radius:6px;padding:8px 12px;font-size:14px;color:#aaa;flex:1;outline:none;background:#fff;" />
+        <div style="display:flex;align-items:center;gap:10px;color:#aaa;">
+          <span style="font-size:18px;cursor:pointer;letter-spacing:1px;">⋮</span>
+          <span style="font-size:16px;cursor:pointer;">✕</span>
+          <span style="font-size:18px;cursor:pointer;letter-spacing:1px;">⋮</span>
+        </div>
+      </div>
+      <a href="#" style="font-size:13px;color:#5856D6;text-decoration:none;">新增簽署者</a>
+    </div>
+  </div>
+</div>
+
+<!-- Page 1 -->
+<div id="page1" class="page app">
+  <div class="topbar">
+    <div class="topbar-left">
+      未命名文件
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#aaa" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+    </div>
+    <div class="topbar-right">
+      <button style="background:#fff;border:1px solid #ccc;border-radius:6px;padding:7px 18px;font-size:14px;cursor:pointer;color:#222;">取消</button>
+      <button style="background:#5856D6;border:none;border-radius:6px;padding:7px 22px;font-size:14px;color:#fff;cursor:pointer;font-weight:500;" onclick="openModal()">下一步</button>
+    </div>
+  </div>
+  <div class="main-layout">
+    <div class="sidebar">
+      <div class="sidebar-group"><div class="sidebar-group-header"><div class="label">∨ 上傳文件</div><a href="#">編輯</a></div></div>
+      <div class="sidebar-group"><div class="sidebar-group-header"><div class="label">∨ 簽署者</div><a href="#">編輯</a></div></div>
+      <div class="sidebar-group">
+        <div class="sidebar-group-header"><div class="label">∧ 創建欄位</div></div>
+        <div class="role-selector"><div style="display:flex;align-items:center;gap:8px;"><div class="role-dot"><svg width="16" height="16" viewBox="0 0 24 24" fill="white"><path d="M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12 2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v2.4h19.2v-2.4c0-3.2-6.4-4.8-9.6-4.8z"/></svg></div><span style="font-size:14px;color:#000;">遊客</span></div><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#aaa" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg></div>
+        <div class="field-list">
+          <div class="field-item" draggable="true" ondragstart="dragField(event,'簽名')"><div class="field-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#333" stroke-width="1.8"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg></div>簽名</div>
+          <div class="field-item" draggable="true" ondragstart="dragField(event,'日期')"><div class="field-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#333" stroke-width="1.8"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></div>日期</div>
+          <div class="field-item" draggable="true" ondragstart="dragField(event,'文字')"><div class="field-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#333" stroke-width="1.8"><polyline points="4 7 4 4 20 4 20 7"/><line x1="9" y1="20" x2="15" y2="20"/><line x1="12" y1="4" x2="12" y2="20"/></svg></div>文字</div>
+          <div class="field-item" draggable="true" ondragstart="dragField(event,'核取方塊')"><div class="field-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#333" stroke-width="1.8"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg></div>核取方塊</div>
+          <div class="field-item" draggable="true" ondragstart="dragField(event,'核取方塊群組')"><div class="field-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#333" stroke-width="1.8"><rect x="2" y="7" width="6" height="6" rx="1"/><polyline points="4 10 5.5 11.5 8 9"/><rect x="2" y="16" width="6" height="6" rx="1"/><line x1="12" y1="10" x2="22" y2="10"/><line x1="12" y1="19" x2="22" y2="19"/></svg></div>核取方塊群組</div>
+          <div class="field-item" draggable="true" ondragstart="dragField(event,'選擇鈕')"><div class="field-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#333" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4" fill="#333"/></svg></div>選擇鈕</div>
+          <div class="field-item" draggable="true" ondragstart="dragField(event,'選擇鈕群組')"><div class="field-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#333" stroke-width="1.8"><circle cx="6" cy="8" r="3.5"/><circle cx="6" cy="8" r="1.5" fill="#333"/><circle cx="6" cy="16" r="3.5"/><line x1="12" y1="8" x2="22" y2="8"/><line x1="12" y1="16" x2="22" y2="16"/></svg></div>選擇鈕群組</div>
+          <div class="field-item" draggable="true" ondragstart="dragField(event,'圖片')"><div class="field-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#333" stroke-width="1.8"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg></div>圖片</div>
+          <div class="field-item" draggable="true" ondragstart="dragField(event,'超連結')"><div class="field-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#333" stroke-width="1.8"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg></div>超連結</div>
+          <div class="field-item" draggable="true" ondragstart="dragField(event,'系統時間')"><div class="field-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#333" stroke-width="1.8"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></div>系統時間</div>
+        </div>
+      </div>
+    </div>
+    <div class="doc-area">
+      <div class="doc-paper" id="docPaper" ondragover="event.preventDefault()" ondrop="dropField(event)"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Page 3 -->
+<div id="page3" class="page app">
+  <div class="topbar">
+    <div class="topbar-left">契約書 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#aaa" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></div>
+    <div class="topbar-right">
+      <button onclick="document.getElementById('warningModal').style.display='flex'" style="background:#fff;border:1px solid #ccc;border-radius:6px;padding:7px 18px;font-size:14px;cursor:pointer;color:#222;">取消</button>
+      <button onclick="page3Next()" style="background:#5856D6;border:none;border-radius:6px;padding:7px 22px;font-size:14px;color:#fff;cursor:pointer;font-weight:500;">下一步</button>
+    </div>
+  </div>
+  <div class="main-layout">
+    <div class="sidebar">
+      <div class="sidebar-group"><div class="sidebar-group-header"><div class="label">∨ 上傳文件</div><a href="#">編輯</a></div></div>
+      <div class="sidebar-group"><div class="sidebar-group-header"><div class="label">∨ 簽署者</div><a href="#">編輯</a></div></div>
+      <div class="sidebar-group">
+        <div class="sidebar-group-header"><div class="label">∧ 創建欄位</div></div>
+        <div class="role-selector"><div style="display:flex;align-items:center;gap:8px;"><div class="role-dot"><svg width="16" height="16" viewBox="0 0 24 24" fill="white"><path d="M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12 2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v2.4h19.2v-2.4c0-3.2-6.4-4.8-9.6-4.8z"/></svg></div><span style="font-size:14px;color:#000;">旅客</span></div><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#aaa" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg></div>
+        <div class="field-list">
+          <div class="field-item" draggable="true" ondragstart="dragField(event,'簽名')"><div class="field-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#333" stroke-width="1.8"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg></div>簽名</div>
+          <div class="field-item" draggable="true" ondragstart="dragField(event,'日期')"><div class="field-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#333" stroke-width="1.8"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></div>日期</div>
+          <div class="field-item" draggable="true" ondragstart="dragField(event,'文字')"><div class="field-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#333" stroke-width="1.8"><polyline points="4 7 4 4 20 4 20 7"/><line x1="9" y1="20" x2="15" y2="20"/><line x1="12" y1="4" x2="12" y2="20"/></svg></div>文字</div>
+          <div class="field-item" draggable="true" ondragstart="dragField(event,'核取方塊')"><div class="field-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#333" stroke-width="1.8"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg></div>核取方塊</div>
+          <div class="field-item" draggable="true" ondragstart="dragField(event,'核取方塊群組')"><div class="field-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#333" stroke-width="1.8"><rect x="2" y="7" width="6" height="6" rx="1"/><polyline points="4 10 5.5 11.5 8 9"/><rect x="2" y="16" width="6" height="6" rx="1"/><line x1="12" y1="10" x2="22" y2="10"/><line x1="12" y1="19" x2="22" y2="19"/></svg></div>核取方塊群組</div>
+          <div class="field-item" draggable="true" ondragstart="dragField(event,'選擇鈕')"><div class="field-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#333" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4" fill="#333"/></svg></div>選擇鈕</div>
+          <div class="field-item" draggable="true" ondragstart="dragField(event,'選擇鈕群組')"><div class="field-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#333" stroke-width="1.8"><circle cx="6" cy="8" r="3.5"/><circle cx="6" cy="8" r="1.5" fill="#333"/><circle cx="6" cy="16" r="3.5"/><line x1="12" y1="8" x2="22" y2="8"/><line x1="12" y1="16" x2="22" y2="16"/></svg></div>選擇鈕群組</div>
+          <div class="field-item" draggable="true" ondragstart="dragField(event,'圖片')"><div class="field-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#333" stroke-width="1.8"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg></div>圖片</div>
+          <div class="field-item" draggable="true" ondragstart="dragField(event,'超連結')"><div class="field-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#333" stroke-width="1.8"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg></div>超連結</div>
+          <div class="field-item" draggable="true" ondragstart="dragField(event,'系統時間')"><div class="field-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#333" stroke-width="1.8"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></div>系統時間</div>
+        </div>
+      </div>
+    </div>
+    <div class="doc-area">
+      <div class="doc-paper"><div class="sig-block"><span class="sig-asterisk">✳</span><span class="sig-label">簽名</span></div></div>
+    </div>
+  </div>
+</div>
+
+<!-- Page 4 -->
+<div id="page4" class="page" style="flex-direction:column;min-height:100vh;background:#fff;">
+  <div class="tpl-topbar">
+    <div style="display:flex;align-items:center;cursor:pointer;" onclick="goLobby()">
+      <div style="width:30px;height:30px;background:#1a1a2e;border-radius:6px;display:flex;align-items:center;justify-content:center;"><svg width="17" height="17" viewBox="0 0 24 24" fill="white"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg></div>
+      <span style="font-size:15px;font-weight:600;margin-left:10px;color:#000;cursor:pointer;" onclick="goLobby()">DottedSign</span>
+    </div>
+    <div class="tpl-nav"><a href="#">我的文件</a><a href="#" class="active">文件範本</a><a href="#">公開表單</a></div>
+    <div style="margin-left:auto;display:flex;align-items:center;gap:16px;">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#555" stroke-width="1.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#555" stroke-width="1.5"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+      <div style="width:34px;height:34px;background:#1a1a2e;border-radius:50%;display:flex;align-items:center;justify-content:center;"><svg width="17" height="17" viewBox="0 0 24 24" fill="white"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg></div>
+    </div>
+  </div>
+  <div class="tpl-layout">
+    <div class="tpl-sidebar">
+      <a href="#">帳戶</a><a href="#">我的檔案</a><a href="#">簽名</a><a href="#">偏好</a>
+      <a href="#" class="active">文件範本</a><a href="#">標籤</a><a href="#">批次簽署任務</a><a href="#">常用簽署組合</a>
+    </div>
+    <div style="flex:1;padding:32px;" onclick="handleBgClick(event)">
+      <div style="font-size:20px;font-weight:500;margin-bottom:24px;color:#000;">文件範本</div>
+      <div style="display:flex;gap:24px;flex-wrap:wrap;align-items:flex-start;">
+        <div class="tpl-card-wrap" id="cardWrap" onclick="selectCard(event)">
+          <div class="tpl-card" id="tplCard">
+            <div class="tpl-card-dots" id="dotsBtn" onclick="toggleMenu(event)">
+              <span></span><span></span><span></span>
+            </div>
+            <div class="ctx-menu" id="ctxMenu">
+              <div class="ctx-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>分享到群組</div>
+              <div class="ctx-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><polyline points="4 7 4 4 20 4 20 7"/><line x1="9" y1="20" x2="15" y2="20"/><line x1="12" y1="4" x2="12" y2="20"/></svg>重新命名</div>
+              <div class="ctx-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg>更改ID</div>
+              <div class="ctx-item" onclick="goToTemplateEdit()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>編輯</div>
+              <div class="ctx-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>管理標籤</div>
+              <div class="ctx-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>複製</div>
+              <div class="ctx-item" style="color:#E53535;"><svg viewBox="0 0 24 24" fill="none" stroke="#E53535" stroke-width="1.8"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>刪除</div>
+            </div>
+          </div>
+          <div class="tpl-card-label">契約書</div>
+        </div>
+        <div style="display:flex;flex-direction:column;align-items:center;cursor:pointer;" onclick="goUploadFromList()">
+          <div class="tpl-card-new"><span>建立</span></div>
+          <div style="color:transparent;font-size:14px;margin-top:10px;">—</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Success Toast -->
+<div id="successToast" class="success-toast">
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+  文件範本已建立。
+</div>
+
+<!-- Modal -->
+<div id="modalOverlay" class="overlay" onclick="closeOnBg(event)">
+  <div onclick="event.stopPropagation()" style="background:#fff;border-radius:12px;width:480px;max-width:96vw;max-height:88vh;display:flex;flex-direction:column;box-shadow:0 8px 32px rgba(0,0,0,0.18);color-scheme:light;overflow:hidden;">
+    <!-- fixed header -->
+    <div style="padding:16px 24px;position:relative;text-align:center;border-bottom:0.5px solid #eee;flex-shrink:0;">
+      <button onclick="closeModal()" style="position:absolute;top:14px;left:18px;background:none;border:none;cursor:pointer;color:#999;font-size:20px;padding:0;line-height:1;">✕</button>
+      <span style="font-size:16px;font-weight:600;color:#000;">審閱並傳送</span>
+    </div>
+
+    <!-- scrollable body -->
+    <div style="flex:1;overflow-y:auto;overflow-x:hidden;">
+
+      <!-- 簽署者 section -->
+      <div style="background:#f5f5f5;padding:10px 24px;font-size:13px;font-weight:500;color:#000;display:flex;align-items:center;gap:6px;border-bottom:0.5px solid #e8e8e8;">
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#555" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>簽署者
+      </div>
+      <div style="padding:18px 24px;">
+        <div style="font-size:13px;color:#000;margin-bottom:8px;">簽署者</div>
+        <div style="border:1px solid #e0e0e0;border-radius:8px;padding:12px 14px;display:flex;align-items:center;gap:10px;margin-bottom:6px;">
+          <div style="width:30px;height:30px;border-radius:50%;background:#1BBFE0;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="white"><path d="M12 2C8.13 2 5 5.13 5 9c0 2.38 1.19 4.47 3 5.74V17c0 .55.45 1 1 1h6c.55 0 1-.45 1-1v-2.26c1.81-1.27 3-3.36 3-5.74 0-3.87-3.13-7-7-7z"/></svg>
+          </div>
+          <span style="font-size:14px;color:#000;">Kdan (<a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="c2a6a7a4a3b7aeb682b0a3a0a0abb6eca1adaf">[email&#160;protected]</a>)</span>
+        </div>
+        <a href="#" style="font-size:13px;color:#5856D6;text-decoration:none;">管理權限</a>
+
+        <div style="margin-top:20px;">
+          <div style="font-size:13px;color:#000;margin-bottom:4px;display:flex;align-items:center;gap:6px;">
+            要求安全密碼身份驗證
+            <div style="width:16px;height:16px;border-radius:50%;border:1.5px solid #aaa;display:flex;align-items:center;justify-content:center;cursor:pointer;"><span style="font-size:10px;color:#aaa;font-weight:600;">?</span></div>
+          </div>
+          <a href="#" style="font-size:13px;color:#5856D6;text-decoration:none;">查看</a>
+        </div>
+
+        <div style="margin-top:20px;">
+          <div style="font-size:13px;color:#000;margin-bottom:4px;display:flex;align-items:center;gap:6px;">
+            CC
+            <div style="width:16px;height:16px;border-radius:50%;border:1.5px solid #aaa;display:flex;align-items:center;justify-content:center;cursor:pointer;"><span style="font-size:10px;color:#aaa;font-weight:600;">?</span></div>
+          </div>
+          <a href="#" style="font-size:13px;color:#5856D6;text-decoration:none;">新增CC</a>
+        </div>
+      </div>
+
+      <!-- 設定 section -->
+      <div style="background:#f5f5f5;padding:10px 24px;font-size:13px;font-weight:500;color:#000;display:flex;align-items:center;gap:6px;border-top:0.5px solid #e8e8e8;border-bottom:0.5px solid #e8e8e8;">
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#555" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>設定
+      </div>
+      <div style="padding:18px 24px;">
+
+        <div style="font-size:13px;color:#000;margin-bottom:12px;display:flex;align-items:center;gap:6px;">
+          設置簽署期限
+          <div style="width:16px;height:16px;border-radius:50%;border:1.5px solid #aaa;display:flex;align-items:center;justify-content:center;cursor:pointer;"><span style="font-size:10px;color:#aaa;font-weight:600;">?</span></div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:24px;">
+          <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px;color:#333;">
+            <div style="width:18px;height:18px;border-radius:50%;border:2px solid #5856D6;display:flex;align-items:center;justify-content:center;flex-shrink:0;"><div style="width:8px;height:8px;border-radius:50%;background:#5856D6;"></div></div>
+            無限制
+          </label>
+          <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px;color:#333;">
+            <div style="width:18px;height:18px;border-radius:50%;border:2px solid #ccc;flex-shrink:0;"></div>
+            7天後
+          </label>
+          <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px;color:#333;">
+            <div style="width:18px;height:18px;border-radius:50%;border:2px solid #ccc;flex-shrink:0;"></div>
+            30天後
+          </label>
+          <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px;color:#333;">
+            <div style="width:18px;height:18px;border-radius:50%;border:2px solid #ccc;flex-shrink:0;"></div>
+            <span style="border-bottom:1px solid #ccc;padding-bottom:2px;color:#aaa;">2026/04/19</span>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#aaa" stroke-width="1.8"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+          </label>
+        </div>
+
+      </div>
+
+      <!-- 訊息 section -->
+      <div style="background:#f5f5f5;padding:10px 24px;font-size:13px;font-weight:500;color:#000;display:flex;align-items:center;gap:6px;border-top:0.5px solid #e8e8e8;border-bottom:0.5px solid #e8e8e8;">
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#555" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>訊息
+      </div>
+      <div style="padding:18px 24px;">
+        <div style="font-size:13px;color:#000;margin-bottom:12px;">給簽署者的訊息</div>
+        <div style="display:flex;gap:0;margin-bottom:16px;">
+          <div style="background:#111;color:#fff;padding:8px 16px;border-radius:6px 0 0 6px;font-size:13px;cursor:pointer;">簽署邀請信</div>
+          <div style="background:#fff;color:#333;padding:8px 16px;border-radius:0 6px 6px 0;font-size:13px;cursor:pointer;border:1px solid #ddd;border-left:none;">簽署完成信</div>
+        </div>
+        <div style="font-size:13px;color:#000;margin-bottom:6px;">給</div>
+        <div style="border:1px solid #ddd;border-radius:8px;padding:10px 12px;display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+          <span style="font-size:13px;color:#aaa;">to</span>
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#aaa" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+        </div>
+        <div style="font-size:13px;color:#000;margin-bottom:6px;">訊息</div>
+        <textarea placeholder="輸入訊息內容" style="width:100%;border:1px solid #ddd;border-radius:8px;padding:10px 12px;font-size:13px;color:#000;outline:none;resize:none;height:100px;font-family:inherit;background:#fff;color-scheme:light;box-sizing:border-box;"></textarea>
+        <div style="font-size:13px;color:#000;margin-top:14px;margin-bottom:6px;">參考資料</div>
+        <a href="#" style="font-size:13px;color:#5856D6;text-decoration:none;">選擇檔案</a>
+      </div>
+
+      <!-- 其他 section -->
+      <div style="background:#f5f5f5;padding:10px 24px;font-size:13px;font-weight:500;color:#000;display:flex;align-items:center;gap:6px;border-top:0.5px solid #e8e8e8;border-bottom:0.5px solid #e8e8e8;">
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#555" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>其他
+      </div>
+      <div style="padding:18px 24px 28px;">
+        <div style="font-size:13px;color:#000;margin-bottom:8px;display:flex;align-items:center;gap:6px;">
+          簽署者語系
+          <div style="width:16px;height:16px;border-radius:50%;border:1.5px solid #aaa;display:flex;align-items:center;justify-content:center;cursor:pointer;"><span style="font-size:10px;color:#aaa;font-weight:600;">?</span></div>
+        </div>
+        <div style="border:1px solid #ddd;border-radius:8px;padding:10px 14px;display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;">
+          <span style="font-size:14px;color:#000;">English</span>
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#aaa" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+        </div>
+        <div style="font-size:13px;color:#000;margin-bottom:8px;">標籤</div>
+        <div style="border:1px solid #ddd;border-radius:8px;padding:10px 14px;display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
+          <span style="font-size:14px;color:#aaa;">在任務上貼標籤</span>
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#aaa" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+        </div>
+
+        <!-- 密碼保護 -->
+        <div style="font-size:13px;font-weight:500;color:#000;margin-bottom:10px;">此文件完成後是否需要密碼保護？</div>
+        <div style="display:flex;align-items:center;gap:10px;cursor:pointer;margin-bottom:14px;" onclick="toggleReviewPwd()">
+          <div id="reviewPwdCheck" style="width:22px;height:22px;border-radius:5px;background:#5856D6;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+            <svg id="reviewPwdCheckIcon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+          </div>
+          <span style="font-size:13px;color:#000;user-select:none;">是</span>
+        </div>
+        <div id="reviewPwdField" style="display:block;">
+          <div style="font-size:13px;font-weight:500;color:#000;margin-bottom:8px;display:flex;align-items:center;gap:6px;">
+            完成檔密碼
+            <div class="tooltip-wrap">
+              <div style="width:16px;height:16px;border-radius:50%;border:1.5px solid #aaa;display:flex;align-items:center;justify-content:center;cursor:pointer;"><span style="font-size:10px;color:#aaa;font-weight:600;">?</span></div>
+              <div class="tooltip-box">僅允許英文大小寫、數字及底線，且在 50 字元以內。</div>
+            </div>
+          </div>
+          <input type="text" id="reviewPwdInput" value="00000000" oninput="validateReviewPwd()" onblur="validateReviewPwd()" maxlength="60"
+            style="width:100%;min-width:0;border:1px solid #d0d0d0;border-radius:8px;padding:10px 14px;font-size:13px;background:#ffffff !important;color:#000 !important;-webkit-text-fill-color:#000 !important;outline:none;font-family:inherit;color-scheme:light;box-sizing:border-box;display:block;" />
+          <div id="reviewPwdError" style="color:#E53535;font-size:12px;margin-top:4px;display:none;"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- fixed footer -->
+    <div style="padding:14px 24px;border-top:0.5px solid #eee;display:flex;justify-content:flex-end;align-items:center;gap:16px;flex-shrink:0;background:#fff;">
+      <a href="#" onclick="closeModal()" style="font-size:14px;color:#5856D6;text-decoration:none;">儲存成草稿</a>
+      <button onclick="confirmModal()" style="background:#5856D6;border:none;border-radius:8px;padding:10px 28px;font-size:14px;color:#fff;cursor:pointer;font-weight:500;">送出</button>
+    </div>
+  </div>
+</div>
+<script>
+let reviewPwdChecked = true;
+let reviewPwdLastValue = '00000000';
+
+function toggleReviewPwd() {
+  reviewPwdChecked = !reviewPwdChecked;
+  const box = document.getElementById('reviewPwdCheck');
+  const icon = document.getElementById('reviewPwdCheckIcon');
+  const field = document.getElementById('reviewPwdField');
+  const input = document.getElementById('reviewPwdInput');
+  if (reviewPwdChecked) {
+    box.style.background = '#5856D6';
+    box.style.border = 'none';
+    icon.style.display = 'block';
+    field.style.display = 'block';
+    // restore last saved value
+    input.value = reviewPwdLastValue;
+    // clear any error state
+    input.style.borderColor = '#d0d0d0';
+    document.getElementById('reviewPwdError').style.display = 'none';
+  } else {
+    // save current value before hiding
+    reviewPwdLastValue = input.value;
+    box.style.background = '#fff';
+    box.style.border = '1.5px solid #ccc';
+    icon.style.display = 'none';
+    field.style.display = 'none';
+  }
+}
+
+function validateReviewPwd() {
+  const input = document.getElementById('reviewPwdInput');
+  const err = document.getElementById('reviewPwdError');
+  if (!input || !err) return;
+  // only validate if the field is visible
+  const field = document.getElementById('reviewPwdField');
+  if (!field || field.style.display === 'none') return;
+  const val = input.value;
+  if (val.length === 0) {
+    input.style.borderColor = '#E53535';
+    err.textContent = '此欄位為必填';
+    err.style.display = 'block';
+  } else if (val.length > 50) {
+    input.style.borderColor = '#E53535';
+    err.textContent = '輸入內容過長，請縮短至 50 字元以內';
+    err.style.display = 'block';
+  } else if (!/^[A-Za-z0-9_]*$/.test(val)) {
+    input.style.borderColor = '#E53535';
+    err.textContent = '輸入內容格式錯誤，請輸入英文大小寫、數字及底線，最多 50 字元';
+    err.style.display = 'block';
+  } else {
+    input.style.borderColor = '#d0d0d0';
+    err.style.display = 'none';
+  }
+}
+
+let finderFileSelected = false;
+
+function openFinderModal() {
+  finderFileSelected = false;
+  resetFinderSelection();
+  document.getElementById('finderModal').style.display = 'flex';
+}
+
+function closeFinderModal() {
+  document.getElementById('finderModal').style.display = 'none';
+}
+
+function selectFinderFile() {
+  finderFileSelected = true;
+  const el = document.getElementById('finderFile');
+  el.style.background = '#4a7cf7';
+  document.getElementById('finderFileName').style.color = '#fff';
+}
+
+function resetFinderSelection() {
+  const el = document.getElementById('finderFile');
+  if (el) { el.style.background = 'transparent'; }
+  const name = document.getElementById('finderFileName');
+  if (name) name.style.color = '#ddd';
+}
+
+function openFinderFile() {
+  closeFinderModal();
+  setTimeout(() => {
+    showPage('pageAfterUpload');
+  }, 1000);
+}
+
+
+let dragFieldName = '';
+let isTemplateCreateFlow = false;
+let taskSubmitted = false; // true = 建立範本流程, false = 其他流程
+function openPage3Modal() {
+  if (window._page3Flow === 'edit') {
+    openModal();
+  } else {
+    openTemplateEdit();
+  }
+}
+
+function dragField(e, name) {
+  dragFieldName = name;
+  e.dataTransfer.effectAllowed = 'copy';
+}
+function dropField(e) {
+  e.preventDefault();
+  const paper = document.getElementById('docPaper');
+  if (!paper) return;
+  const rect = paper.getBoundingClientRect();
+  const x = e.clientX - rect.left;
+  const y = e.clientY - rect.top;
+
+  const block = document.createElement('div');
+  block.style.cssText = `position:absolute;left:${x-60}px;top:${y-20}px;width:160px;height:44px;background:#D6F0F5;border:1.5px dashed #87CEDC;border-radius:4px;font-size:14px;color:#5BA0AC;cursor:move;user-select:none;display:flex;align-items:center;justify-content:center;box-sizing:border-box;resize:both;overflow:hidden;min-width:80px;min-height:30px;`;
+  block.textContent = dragFieldName;
+
+  // drag to move
+  block.addEventListener('mousedown', function(ev) {
+    if (ev.target !== block) return;
+    ev.preventDefault();
+    const startX = ev.clientX - block.offsetLeft;
+    const startY = ev.clientY - block.offsetTop;
+    function move(ev2) {
+      const pr = paper.getBoundingClientRect();
+      block.style.left = Math.max(0, Math.min(pr.width - block.offsetWidth, ev2.clientX - pr.left - startX)) + 'px';
+      block.style.top = Math.max(0, Math.min(pr.height - block.offsetHeight, ev2.clientY - pr.top - startY)) + 'px';
+    }
+    function up() {
+      document.removeEventListener('mousemove', move);
+      document.removeEventListener('mouseup', up);
+    }
+    document.addEventListener('mousemove', move);
+    document.addEventListener('mouseup', up);
+  });
+
+  paper.appendChild(block);
+}
+
+
+let isChecked = false;
+const PWD_PATTERN = /^[A-Za-z0-9_]*$/;
+const MSG = {
+  tooLong: '輸入內容過長，請縮短至 50 字元以內',
+  badFormat: '輸入內容格式錯誤，請輸入英文大小寫、數字及底線，最多 50 字元',
+  required: '此欄位為必填',
+};
+
+function handleTagChange(sel) { sel.style.color = sel.value ? '#000' : '#bbb'; }
+
+function toggleCheck() {
+  isChecked = !isChecked;
+  const box = document.getElementById('customCheck');
+  const field = document.getElementById('pwdField');
+  if (isChecked) { box.classList.add('checked'); field.style.display = 'block'; }
+  else { box.classList.remove('checked'); field.style.display = 'none'; document.getElementById('pwdInput').value = ''; clearError(); }
+}
+
+function validatePwd() {
+  const val = document.getElementById('pwdInput').value;
+  const errEl = document.getElementById('pwdError');
+  const input = document.getElementById('pwdInput');
+  if (val.length > 50) { input.classList.add('error'); errEl.textContent = MSG.tooLong; errEl.classList.add('show'); }
+  else if (val.length > 0 && !PWD_PATTERN.test(val)) { input.classList.add('error'); errEl.textContent = MSG.badFormat; errEl.classList.add('show'); }
+  else { clearError(); }
+}
+
+function clearError() {
+  const input = document.getElementById('pwdInput');
+  if (input) input.classList.remove('error');
+  const e = document.getElementById('pwdError');
+  if (e) { e.textContent = ''; e.classList.remove('show'); }
+}
+
+
+function openModal() { document.getElementById('modalOverlay').classList.add('active'); }
+function closeModal() {
+  const overlay = document.getElementById('modalOverlay');
+  if (overlay) overlay.classList.remove('active');
+  isChecked = false;
+  const cc = document.getElementById('customCheck');
+  if (cc) cc.classList.remove('checked');
+  const pf = document.getElementById('pwdField');
+  if (pf) pf.style.display = 'none';
+  const pi = document.getElementById('pwdInput');
+  if (pi) pi.value = '';
+  clearError();
+}
+function closeOnBg(e) { if (e.target === document.getElementById('modalOverlay')) closeModal(); }
+
+function confirmModal() {
+  // 只在密碼欄可見且勾選時才驗證
+  const pwdField = document.getElementById('reviewPwdField');
+  const pwdChecked = document.getElementById('reviewPwdCheck');
+  if (pwdField && pwdChecked && pwdField.style.display !== 'none' && reviewPwdChecked) {
+    const input = document.getElementById('reviewPwdInput');
+    const err = document.getElementById('reviewPwdError');
+    const val = input ? input.value.trim() : '';
+    if (!val) {
+      if (input) input.style.borderColor = '#E53535';
+      if (err) { err.textContent = '此欄位為必填'; err.style.display = 'block'; }
+      return;
+    }
+    if (val.length > 50) {
+      if (input) input.style.borderColor = '#E53535';
+      if (err) { err.textContent = '輸入內容過長，請縮短至 50 字元以內'; err.style.display = 'block'; }
+      return;
+    }
+    if (!/^[A-Za-z0-9_]*$/.test(val)) {
+      if (input) input.style.borderColor = '#E53535';
+      if (err) { err.textContent = '輸入內容格式錯誤，請輸入英文大小寫、數字及底線，最多 50 字元'; err.style.display = 'block'; }
+      return;
+    }
+  }
+
+  // 關閉 modal
+  closeModal();
+
+  // 顯示 toast
+  taskSubmitted = true;
+  const taskToast = document.getElementById('taskSuccessToast');
+  if (taskToast) taskToast.style.display = 'flex';
+
+  // 1.5 秒後跳回大廳
+  setTimeout(() => {
+    if (taskToast) taskToast.style.display = 'none';
+    ['page1','page3','page4','pageUpload','pageTemplateSelected'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) { el.style.display = 'none'; el.classList.remove('active'); }
+    });
+    // 待自己簽署 +1
+    const cnt = document.getElementById('lobbyCount1');
+    if (cnt) cnt.textContent = '1';
+    // 顯示任務卡片
+    const empty = document.getElementById('lobbyEmpty');
+    const card = document.getElementById('lobbyTaskCard');
+    if (empty) empty.style.display = 'none';
+    if (card) card.style.display = 'block';
+    // 當下時間
+    const now = new Date();
+    const pad = n => String(n).padStart(2,'0');
+    const timeStr = `${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())}, ${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
+    const timeEl = document.getElementById('taskCardTime');
+    if (timeEl) timeEl.textContent = timeStr;
+    // 進入大廳
+    const lobby = document.getElementById('pageLobby');
+    if (lobby) { lobby.style.display = 'flex'; lobby.classList.add('active'); }
+  }, 1500);
+}
+
+function showPage(id, hideImport) {
+  ['pageLobby','page1','page3','page4','pageUpload','pageTemplateSelected','pageAfterUpload'].forEach(pid => {
+    const el = document.getElementById(pid);
+    if (el) {
+      el.style.display = 'none';
+      el.classList.remove('active');
+    }
+  });
+  const el = document.getElementById(id);
+  if (el) {
+    el.style.display = '';
+    el.classList.add('active');
+  }
+  const d = document.getElementById('signingDropdown');
+  if (d) d.style.display = 'none';
+  const imp = document.getElementById('importSection');
+  if (imp) imp.style.display = hideImport ? 'none' : 'flex';
+}
+
+function goLobby() {
+  showPage('pageLobby');
+  // only show task card if a task was submitted in this session
+  const empty = document.getElementById('lobbyEmpty');
+  const card = document.getElementById('lobbyTaskCard');
+  if (!taskSubmitted) {
+    if (empty) empty.style.display = 'none';
+    if (card) card.style.display = 'none';
+    const cnt = document.getElementById('lobbyCount1');
+    if (cnt) cnt.textContent = '251';
+  }
+}
+function goPage1() { showPage('page1'); }
+function goPage4(e) { if (e) e.preventDefault(); showPage('page4'); }
+
+function openFinderModal() {
+  const m = document.getElementById('finderModal');
+  if (m) m.style.display = 'flex';
+  // reset selection
+  document.getElementById('finderFileItem').style.background = 'transparent';
+  document.getElementById('finderOpenBtn').style.opacity = '0.5';
+  finderFileSelected = false;
+}
+function closeFinderModal() {
+  const m = document.getElementById('finderModal');
+  if (m) m.style.display = 'none';
+}
+function selectFinderFile(el) {
+  el.style.background = '#4A9EF5';
+  document.getElementById('finderOpenBtn').style.opacity = '1';
+  finderFileSelected = true;
+}
+function openFinderFile() {
+  closeFinderModal();
+  setTimeout(() => {
+    showPage('pageAfterUpload');
+  }, 1000);
+}
+
+function goUploadFromList() {
+  isTemplateCreateFlow = true;
+  showPage('pageUpload');
+  const imp = document.getElementById('uploadImportSection');
+  if (imp) imp.style.display = 'none';
+}
+
+function goToTemplateEdit() {
+  isTemplateCreateFlow = false;
+  showPage('page3');
+}
+
+
+function selectCard(e) {
+  if (e.target.closest('.tpl-card-dots') || e.target.closest('.ctx-menu')) return;
+  const card = document.getElementById('tplCard');
+  card.classList.toggle('selected');
+  if (!card.classList.contains('selected')) document.getElementById('ctxMenu').classList.remove('show');
+}
+
+function toggleMenu(e) {
+  e.stopPropagation();
+  document.getElementById('ctxMenu').classList.toggle('show');
+}
+
+function openTemplateModal() {
+  const modal = document.getElementById('templateModal');
+  modal.style.display = 'flex';
+}
+function closeTemplateModal() {
+  document.getElementById('templateModal').style.display = 'none';
+}
+function selectTemplate(el) {
+  // deselect all
+  document.querySelectorAll('#templateModal .tpl-thumb').forEach(card => {
+    card.style.border = '1px solid #e0e0e0';
+    card.style.background = '#fff';
+  });
+  // select clicked
+  const card = el.querySelector('.tpl-thumb');
+  if (card) {
+    card.style.border = '2px solid #4A9EF5';
+    card.style.background = '#deeeff';
+  }
+}
+function useTemplate() {
+  closeTemplateModal();
+  // short delay then navigate
+  setTimeout(() => {
+    ['pageLobby','page1','page3','page4','pageUpload'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) { el.style.display = 'none'; el.classList.remove('active'); }
+    });
+    const p = document.getElementById('pageTemplateSelected');
+    p.style.display = 'flex'; p.classList.add('active');
+  }, 800);
+}
+
+function goToEditor() {
+  const email = document.querySelector('#pageTemplateSelected input[placeholder="電子郵件"]');
+  ['pageLobby','pageUpload','pageTemplateSelected','page3','page4'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) { el.style.display = 'none'; el.classList.remove('active'); }
+  });
+  const p1 = document.getElementById('page1');
+  p1.style.display = 'flex'; p1.classList.add('active');
+}
+
+function goUpload() {
+  isTemplateCreateFlow = false;
+  closeSigningModal();
+  showPage('pageUpload');
+  const imp = document.getElementById('uploadImportSection');
+  if (imp) imp.style.display = 'flex';
+}
+
+function toggleSigningModal() {
+  const d = document.getElementById('signingDropdown');
+  d.style.display = d.style.display === 'flex' ? 'none' : 'flex';
+}
+function closeSigningModal() {
+  const d = document.getElementById('signingDropdown');
+  if (d) d.style.display = 'none';
+}
+// close dropdown when clicking outside
+document.addEventListener('click', function(e) {
+  const d = document.getElementById('signingDropdown');
+  const btn = document.getElementById('plusBtn');
+  if (d && !d.contains(e.target) && btn && !btn.contains(e.target)) {
+    d.style.display = 'none';
+  }
+});
+
+function handleBgClick(e) {
+  if (!e.target.closest('#cardWrap')) {
+    document.getElementById('tplCard').classList.remove('selected');
+    document.getElementById('ctxMenu').classList.remove('show');
+  }
+}
+
+function page3Next() {
+  openTemplateEdit();
+}
+
+function openTemplateEdit() {
+  // Restore previously saved state
+  tplChecked = savedTplChecked;
+  const box = document.getElementById('tplCheck');
+  const icon = document.getElementById('tplCheckIcon');
+  const field = document.getElementById('tplPwdField');
+  const input = document.getElementById('tplPwdInput');
+  if (tplChecked) {
+    box.style.background = '#4A9EF5'; box.style.borderColor = '#4A9EF5';
+    icon.style.display = 'block';
+    field.style.display = 'block';
+    if (input) input.value = savedTplPwd;
+  } else {
+    box.style.background = '#fff'; box.style.border = '1.5px solid #ccc';
+    icon.style.display = 'none';
+    field.style.display = 'none';
+    if (input) input.value = '';
+  }
+  // Clear any previous errors
+  const err = document.getElementById('tplPwdError');
+  if (err) err.style.display = 'none';
+  if (input) input.style.borderColor = '#d0d0d0';
+  document.getElementById('templateEditOverlay').classList.add('active');
+}
+function closeTemplateEdit() {
+  // Show warning first
+  const w = document.getElementById('warningModal');
+  if (w) w.style.display = 'flex';
+}
+function closeWarningModal() {
+  const w = document.getElementById('warningModal');
+  if (w) w.style.display = 'none';
+}
+function confirmLeaveTemplateEdit() {
+  closeWarningModal();
+  const overlay = document.getElementById('templateEditOverlay');
+  if (overlay) overlay.classList.remove('active');
+  showPage('page4');
+}
+let tplChecked = false;
+// Saved template settings (persisted across edits)
+let savedTplChecked = false;
+let savedTplPwd = '';
+function toggleTplCheck() {
+  tplChecked = !tplChecked;
+  const box = document.getElementById('tplCheck');
+  const icon = document.getElementById('tplCheckIcon');
+  const field = document.getElementById('tplPwdField');
+  if (tplChecked) {
+    box.style.background = '#4A9EF5'; box.style.borderColor = '#4A9EF5'; icon.style.display = 'block'; field.style.display = 'block';
+  } else {
+    box.style.background = '#fff'; box.style.borderColor = '#ccc'; icon.style.display = 'none'; field.style.display = 'none';
+    document.getElementById('tplPwdInput').value = '';
+    document.getElementById('tplPwdError').style.display = 'none';
+  }
+}
+function validateTplPwd() {
+  const input = document.getElementById('tplPwdInput');
+  const err = document.getElementById('tplPwdError');
+  if (!input || !err) return;
+  const val = input.value;
+  if (val.length > 50) { input.style.borderColor='#E53535'; err.textContent='輸入內容過長，請縮短至 50 字元以內'; err.style.display='block'; }
+  else if (val.length > 0 && !/^[A-Za-z0-9_]*$/.test(val)) { input.style.borderColor='#E53535'; err.textContent='輸入內容格式錯誤，請輸入英文大小寫、數字及底線，最多 50 字元'; err.style.display='block'; }
+  else { input.style.borderColor='#d0d0d0'; err.style.display='none'; }
+}
+function confirmTemplateEdit() {
+  if (tplChecked) {
+    const val = document.getElementById('tplPwdInput').value.trim();
+    const err = document.getElementById('tplPwdError');
+    const input = document.getElementById('tplPwdInput');
+    if (!val) { input.style.borderColor='#E53535'; err.textContent='此欄位為必填'; err.style.display='block'; return; }
+    if (val.length > 50) { input.style.borderColor='#E53535'; err.textContent='輸入內容過長，請縮短至 50 字元以內'; err.style.display='block'; return; }
+    if (!/^[A-Za-z0-9_]*$/.test(val)) { input.style.borderColor='#E53535'; err.textContent='輸入內容格式錯誤，請輸入英文大小寫、數字及底線，最多 50 字元'; err.style.display='block'; return; }
+  }
+  // Save current settings
+  savedTplChecked = tplChecked;
+  savedTplPwd = tplChecked ? document.getElementById('tplPwdInput').value : '';
+  closeTemplateEdit();
+  // show success and go to page4
+  const toast = document.getElementById('successToast');
+  if (toast) toast.classList.add('active');
+  setTimeout(() => {
+    if (toast) toast.classList.remove('active');
+    showPage('page4');
+  }, 2200);
+}
+</script>
+
+<!-- Signing Options Modal -->
+<div id="signingModal" style="display:none;position:fixed;inset:0;z-index:500;">
+  <div style="position:absolute;inset:0;"></div>
+  <!-- panel from bottom-right -->
+  
+    <!-- close X button -->
+    <div onclick="closeSigningModal()" style="position:absolute;top:24px;right:24px;width:40px;height:40px;border-radius:50%;background:#6C6FDE;display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 2px 8px rgba(108,111,222,0.4);">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+    </div>
+    <!-- options card -->
+    <div style="background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 8px 32px rgba(0,0,0,0.12);margin-top:60px;">
+      <!-- Option 1 -->
+      <div onclick="goPage1()" style="display:flex;align-items:center;gap:16px;padding:16px 20px;cursor:pointer;border-bottom:0.5px solid #eee;">
+        <div style="width:52px;height:52px;flex-shrink:0;display:flex;align-items:center;justify-content:center;">
+          <svg width="48" height="48" viewBox="0 0 60 60" fill="none">
+            <ellipse cx="30" cy="50" rx="18" ry="5" fill="#e8eaf6" opacity="0.5"/>
+            <rect x="8" y="20" width="28" height="34" rx="3" fill="#e8eaf6"/>
+            <path d="M20 38 Q24 30 28 36 Q32 42 36 28" stroke="#9fa8da" stroke-width="2" fill="none" stroke-linecap="round"/>
+            <circle cx="14" cy="26" r="2" fill="#9fa8da"/>
+          </svg>
+        </div>
+        <div>
+          <div style="font-size:15px;font-weight:600;color:#111;margin-bottom:3px;">自己簽署</div>
+          <div style="font-size:12px;color:#aaa;">你是文件的唯一簽署者</div>
+        </div>
+      </div>
+      <!-- Option 2 -->
+      <div onclick="goPage1()" style="display:flex;align-items:center;gap:16px;padding:16px 20px;cursor:pointer;border-bottom:0.5px solid #eee;">
+        <div style="width:52px;height:52px;flex-shrink:0;display:flex;align-items:center;justify-content:center;">
+          <svg width="48" height="48" viewBox="0 0 60 60" fill="none">
+            <rect x="14" y="18" width="28" height="34" rx="3" fill="#e8eaf6"/>
+            <rect x="18" y="24" width="20" height="3" rx="1.5" fill="#9fa8da"/>
+            <rect x="18" y="30" width="20" height="3" rx="1.5" fill="#9fa8da"/>
+            <rect x="18" y="36" width="14" height="3" rx="1.5" fill="#9fa8da"/>
+            <circle cx="42" cy="18" r="8" fill="#c5cae9"/>
+            <circle cx="42" cy="15" r="3" fill="#7986cb"/>
+            <path d="M36 24c0-3.3 2.7-6 6-6s6 2.7 6 6" fill="#7986cb"/>
+          </svg>
+        </div>
+        <div>
+          <div style="font-size:15px;font-weight:600;color:#111;margin-bottom:3px;">邀請他人簽署</div>
+          <div style="font-size:12px;color:#aaa;">指派簽署欄位給其他簽署人</div>
+        </div>
+      </div>
+      <!-- Option 3 -->
+      <div onclick="goPage1()" style="display:flex;align-items:center;gap:16px;padding:16px 20px;cursor:pointer;border-bottom:0.5px solid #eee;">
+        <div style="width:52px;height:52px;flex-shrink:0;display:flex;align-items:center;justify-content:center;">
+          <svg width="48" height="48" viewBox="0 0 60 60" fill="none">
+            <rect x="10" y="22" width="26" height="30" rx="3" fill="#c5cae9"/>
+            <rect x="18" y="16" width="26" height="30" rx="3" fill="#e8eaf6"/>
+            <rect x="22" y="22" width="16" height="2.5" rx="1.2" fill="#9fa8da"/>
+            <rect x="22" y="27" width="16" height="2.5" rx="1.2" fill="#9fa8da"/>
+            <rect x="22" y="32" width="10" height="2.5" rx="1.2" fill="#9fa8da"/>
+          </svg>
+        </div>
+        <div>
+          <div style="font-size:15px;font-weight:600;color:#111;margin-bottom:3px;">信封簽署</div>
+          <div style="font-size:12px;color:#aaa;line-height:1.4;">指派一份信封含多份文件給相同簽署人</div>
+        </div>
+      </div>
+      <!-- Option 4 -->
+      <div onclick="goPage1()" style="display:flex;align-items:center;gap:16px;padding:16px 20px;cursor:pointer;">
+        <div style="width:52px;height:52px;flex-shrink:0;display:flex;align-items:center;justify-content:center;">
+          <svg width="48" height="48" viewBox="0 0 60 60" fill="none">
+            <ellipse cx="30" cy="52" rx="16" ry="4" fill="#e8eaf6" opacity="0.6"/>
+            <rect x="16" y="24" width="28" height="22" rx="3" fill="#e8eaf6"/>
+            <circle cx="30" cy="14" r="8" fill="#c5cae9"/>
+            <circle cx="30" cy="11" r="3" fill="#7986cb"/>
+            <path d="M24 20c0-3.3 2.7-6 6-6s6 2.7 6 6" fill="#7986cb"/>
+            <rect x="22" y="30" width="16" height="2" rx="1" fill="#9fa8da"/>
+            <rect x="22" y="35" width="10" height="2" rx="1" fill="#9fa8da"/>
+          </svg>
+        </div>
+        <div>
+          <div style="font-size:15px;font-weight:600;color:#111;margin-bottom:3px;">臨櫃簽署</div>
+          <div style="font-size:12px;color:#aaa;">現場使用範本簽署</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 編輯模版 Modal (for 文件範本流程) -->
+<div id="templateEditOverlay" class="overlay" onclick="if(event.target===this)closeTemplateEdit()">
+  <div onclick="event.stopPropagation()" style="background:#ffffff;border-radius:12px;width:460px;max-height:92vh;overflow-y:auto;box-shadow:0 8px 32px rgba(0,0,0,0.18);color-scheme:light;font-size:12px;color:#000;">
+    <div style="padding:14px 22px 10px;position:relative;text-align:center;">
+      <button onclick="closeTemplateEdit()" style="position:absolute;top:12px;left:18px;background:none;border:none;cursor:pointer;color:#999;font-size:18px;padding:0;">✕</button>
+      <span style="font-weight:500;font-size:14px;">編輯模版</span>
+    </div>
+    <div style="background:#f5f5f5;padding:8px 22px;font-weight:500;color:#000;font-size:12px;display:flex;align-items:center;gap:6px;border-top:0.5px solid #e8e8e8;border-bottom:0.5px solid #e8e8e8;">
+      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#555" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>簽署者
+    </div>
+    <div style="padding:14px 22px 8px;background:#fff;">
+      <div style="font-size:12px;color:#000;margin-bottom:6px;display:flex;align-items:center;gap:5px;">角色</div>
+      <div style="border:1px solid #e0e0e0;border-radius:8px;display:flex;align-items:center;gap:10px;padding:9px 12px;background:#fff;">
+        <div style="width:28px;height:28px;border-radius:50%;background:#1BBFE0;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="white"><path d="M12 2C8.13 2 5 5.13 5 9c0 2.38 1.19 4.47 3 5.74V17c0 .55.45 1 1 1h6c.55 0 1-.45 1-1v-2.26c1.81-1.27 3-3.36 3-5.74 0-3.87-3.13-7-7-7z"/></svg>
+        </div>
+        <span style="font-size:12px;">A</span>
+      </div>
+      <a href="#" style="color:#5856D6;font-size:12px;text-decoration:none;display:inline-block;margin-top:8px;">管理權限</a>
+    </div>
+    <div style="background:#f5f5f5;padding:8px 22px;font-weight:500;color:#000;font-size:12px;display:flex;align-items:center;gap:6px;border-top:0.5px solid #e8e8e8;border-bottom:0.5px solid #e8e8e8;margin-top:10px;">
+      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#555" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>設定
+    </div>
+    <div style="padding:14px 22px 10px;background:#fff;">
+      <div style="margin-bottom:14px;">
+        <div style="font-size:12px;color:#000;margin-bottom:6px;">標籤</div>
+        <div style="position:relative;">
+          <select style="width:100%;border:1px solid #d0d0d0;border-radius:8px;padding:8px 30px 8px 12px;font-size:12px;background:#fff;color:#bbb;outline:none;font-family:inherit;appearance:none;-webkit-appearance:none;color-scheme:light;">
+            <option value="" disabled selected>在範本上貼標籤</option>
+            <option value="a">標籤 A</option>
+            <option value="b">標籤 B</option>
+          </select>
+          <svg style="position:absolute;right:10px;top:50%;transform:translateY(-50%);pointer-events:none;" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#999" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+        </div>
+      </div>
+      <div style="margin-bottom:14px;">
+        <div style="font-size:12px;color:#000;margin-bottom:6px;">範本代碼</div>
+        <input type="text" style="width:100%;border:1px solid #d0d0d0;border-radius:8px;padding:8px 12px;font-size:12px;background:#fff;color:#000;outline:none;font-family:inherit;" />
+      </div>
+      <div style="margin-bottom:8px;">
+        <div style="font-size:12px;color:#000;margin-bottom:6px;">此文件完成檔是否要加密？</div>
+        <div style="display:flex;align-items:center;gap:10px;margin-top:4px;cursor:pointer;" onclick="toggleTplCheck()">
+          <div id="tplCheck" style="width:20px;height:20px;border-radius:5px;border:1.5px solid #ccc;background:#fff;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:background 0.15s;">
+            <svg id="tplCheckIcon" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="display:none;"><polyline points="20 6 9 17 4 12"/></svg>
+          </div>
+          <span style="font-size:12px;color:#000;user-select:none;">是</span>
+        </div>
+      </div>
+      <div id="tplPwdField" style="display:none;margin-top:10px;">
+        <div style="font-size:12px;color:#000;margin-bottom:6px;display:flex;align-items:center;gap:5px;">
+          完成檔密碼
+          <div class="tooltip-wrap">
+            <div style="width:14px;height:14px;border-radius:50%;background:#bbb;color:#fff;font-size:9px;font-weight:600;display:flex;align-items:center;justify-content:center;cursor:pointer;">?</div>
+            <div class="tooltip-box">僅允許英文大小寫、數字及底線，且在 50 字元以內。</div>
+          </div>
+        </div>
+        <input type="text" id="tplPwdInput" oninput="validateTplPwd()" maxlength="60" placeholder="此預設密碼用於開啟簽署完成後的 PDF 檔案" style="width:100%;min-width:0;border:1px solid #d0d0d0;border-radius:8px;padding:8px 12px;font-size:12px;background:#fff !important;color:#000 !important;outline:none;font-family:inherit;-webkit-text-fill-color:#000;box-sizing:border-box;display:block;" />
+        <div id="tplPwdError" style="color:#E53535;font-size:12px;margin-top:4px;display:none;"></div>
+      </div>
+    </div>
+    <div style="padding:10px 22px 14px;display:flex;justify-content:flex-end;gap:10px;border-top:0.5px solid #eee;background:#fff;align-items:center;">
+      <button onclick="closeTemplateEdit()" style="background:#fff;border:1px solid #ccc;border-radius:6px;padding:6px 16px;cursor:pointer;color:#222;font-family:inherit;font-size:12px;">取消</button>
+      <button onclick="confirmTemplateEdit()" style="background:#6C6FDE;border:none;border-radius:10px;padding:9px 28px;color:#fff;cursor:pointer;font-weight:500;font-family:inherit;font-size:12px;">確認</button>
+    </div>
+  </div>
+</div>
+
+<!-- Task Success Toast -->
+<div id="taskSuccessToast" style="display:none;position:fixed;bottom:32px;left:50%;transform:translateX(-50%);background:#34C759;color:white;border-radius:8px;padding:12px 24px;font-size:14px;align-items:center;gap:12px;white-space:nowrap;z-index:9999;box-shadow:0 4px 16px rgba(0,0,0,0.15);">
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+  文件任務已成功新增
+  <div onclick="document.getElementById('taskSuccessToast').style.display='none'" style="cursor:pointer;margin-left:4px;font-size:16px;line-height:1;">✕</div>
+</div>
+
+
+<!-- Warning Modal -->
+<div id="warningModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:1000;align-items:center;justify-content:center;">
+  <div style="background:#fff;border-radius:12px;width:380px;box-shadow:0 8px 32px rgba(0,0,0,0.18);overflow:hidden;">
+    <div style="padding:16px 20px;position:relative;text-align:center;border-bottom:0.5px solid #eee;">
+      <button onclick="closeWarningModal()" style="position:absolute;top:14px;left:16px;background:none;border:none;cursor:pointer;color:#999;font-size:18px;padding:0;line-height:1;">✕</button>
+      <span style="font-size:16px;font-weight:600;color:#000;">警告</span>
+    </div>
+    <div style="padding:32px 24px;text-align:center;">
+      <span style="font-size:15px;color:#000;">確定要放棄編輯文件範本嗎？</span>
+    </div>
+    <div style="padding:14px 20px 18px;border-top:0.5px solid #eee;display:flex;justify-content:flex-end;gap:10px;">
+      <button onclick="closeWarningModal()" style="background:#fff;border:1px solid #ccc;border-radius:6px;padding:8px 20px;font-size:14px;cursor:pointer;color:#333;font-family:inherit;">取消</button>
+      <button onclick="confirmLeaveTemplateEdit()" style="background:#E53535;border:none;border-radius:6px;padding:8px 20px;font-size:14px;cursor:pointer;color:#fff;font-weight:500;font-family:inherit;">確認</button>
+    </div>
+  </div>
+</div>
+
+<!-- Mac Finder Modal -->
+<div id="finderModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:2000;align-items:center;justify-content:center;">
+  <div style="background:#2b2b2b;border-radius:12px;width:620px;height:380px;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,0.5);">
+    <!-- Toolbar -->
+    <div style="background:#3a3a3a;padding:8px 16px;display:flex;align-items:center;gap:10px;border-bottom:1px solid #1a1a1a;">
+      <div style="display:flex;gap:4px;">
+        <div style="width:28px;height:22px;background:#444;border-radius:4px;display:flex;align-items:center;justify-content:center;cursor:pointer;"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#aaa" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg></div>
+        <div style="width:28px;height:22px;background:#444;border-radius:4px;display:flex;align-items:center;justify-content:center;cursor:pointer;"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#aaa" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg></div>
+      </div>
+      <div style="display:flex;gap:4px;">
+        <div style="background:#555;border-radius:4px;padding:3px 10px;display:flex;align-items:center;gap:4px;cursor:pointer;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#aaa" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#aaa" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg></div>
+        <div style="background:#555;border-radius:4px;padding:3px 10px;display:flex;align-items:center;gap:4px;cursor:pointer;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#aaa" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="9" y1="3" x2="9" y2="21"/></svg><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#aaa" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg></div>
+      </div>
+      <!-- breadcrumb -->
+      <div style="flex:1;display:flex;align-items:center;justify-content:center;">
+        <div style="background:#4a7cf7;border-radius:6px;padding:4px 14px;display:flex;align-items:center;gap:6px;min-width:160px;justify-content:center;">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="#90c8ff"><path d="M3 7a2 2 0 0 1 2-2h5l2 2h7a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
+          <span style="font-size:13px;color:#fff;">範本</span>
+          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+        </div>
+      </div>
+      <!-- search -->
+      <div style="background:#444;border-radius:6px;padding:4px 10px;display:flex;align-items:center;gap:6px;width:160px;">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#888" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <span style="font-size:12px;color:#666;">搜尋</span>
+      </div>
+    </div>
+
+    <!-- Main content: sidebar + files -->
+    <div style="display:flex;flex:1;overflow:hidden;">
+      <!-- Sidebar -->
+      <div style="width:180px;background:#2b2b2b;border-right:1px solid #1a1a1a;padding:12px 0;overflow-y:auto;flex-shrink:0;">
+        <div style="padding:4px 16px;font-size:11px;color:#888;font-weight:600;margin-bottom:4px;">喜好項目</div>
+        <div style="padding:6px 16px;display:flex;align-items:center;gap:8px;cursor:pointer;" onmouseenter="this.style.background='#3a3a3a'" onmouseleave="this.style.background='transparent'">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="#4a9eff"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+          <span style="font-size:13px;color:#ddd;">下載項目</span>
+        </div>
+        <div style="padding:6px 16px;display:flex;align-items:center;gap:8px;cursor:pointer;" onmouseenter="this.style.background='#3a3a3a'" onmouseleave="this.style.background='transparent'">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="#4a9eff"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+          <span style="font-size:13px;color:#ddd;">桌面</span>
+        </div>
+        <div style="padding:6px 16px;display:flex;align-items:center;gap:8px;cursor:pointer;" onmouseenter="this.style.background='#3a3a3a'" onmouseleave="this.style.background='transparent'">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#4a9eff" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/></svg>
+          <span style="font-size:13px;color:#ddd;">文件</span>
+        </div>
+        <div style="padding:6px 16px;display:flex;align-items:center;gap:8px;cursor:pointer;" onmouseenter="this.style.background='#3a3a3a'" onmouseleave="this.style.background='transparent'">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="#4a9eff"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/></svg>
+          <span style="font-size:13px;color:#ddd;">應用程式</span>
+        </div>
+
+        <div style="padding:4px 16px;font-size:11px;color:#888;font-weight:600;margin:8px 0 4px;">iCloud</div>
+        <div style="padding:6px 16px;display:flex;align-items:center;gap:8px;cursor:pointer;" onmouseenter="this.style.background='#3a3a3a'" onmouseleave="this.style.background='transparent'">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#4a9eff" stroke-width="2"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"/></svg>
+          <span style="font-size:13px;color:#ddd;">iCloud 雲碟</span>
+        </div>
+        <div style="padding:6px 16px;display:flex;align-items:center;gap:8px;cursor:pointer;" onmouseenter="this.style.background='#3a3a3a'" onmouseleave="this.style.background='transparent'">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#4a9eff" stroke-width="2"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>
+          <span style="font-size:13px;color:#ddd;">已共享</span>
+        </div>
+
+        <div style="padding:4px 16px;font-size:11px;color:#888;font-weight:600;margin:8px 0 4px;">位置</div>
+        <div style="padding:6px 16px;display:flex;align-items:center;gap:8px;cursor:pointer;" onmouseenter="this.style.background='#3a3a3a'" onmouseleave="this.style.background='transparent'">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#aaa" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="1"/><circle cx="12" cy="10" r="3"/></svg>
+          <span style="font-size:13px;color:#ddd;">Antigravity</span>
+          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#666" stroke-width="2" style="margin-left:auto;"><polyline points="5 12 12 5 19 12"/><polyline points="5 19 12 12 19 19"/></svg>
+        </div>
+        <div style="padding:6px 16px;display:flex;align-items:center;gap:8px;cursor:pointer;" onmouseenter="this.style.background='#3a3a3a'" onmouseleave="this.style.background='transparent'">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#aaa" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="1"/><circle cx="12" cy="10" r="3"/></svg>
+          <span style="font-size:13px;color:#ddd;">Claude</span>
+          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#666" stroke-width="2" style="margin-left:auto;"><polyline points="5 12 12 5 19 12"/><polyline points="5 19 12 12 19 19"/></svg>
+        </div>
+
+        <div style="padding:4px 16px;font-size:11px;color:#888;font-weight:600;margin:8px 0 4px;">標籤</div>
+        <div style="padding:6px 16px;display:flex;align-items:center;gap:8px;cursor:pointer;" onmouseenter="this.style.background='#3a3a3a'" onmouseleave="this.style.background='transparent'">
+          <div style="width:12px;height:12px;border-radius:50%;background:#E53535;flex-shrink:0;"></div>
+          <span style="font-size:13px;color:#ddd;">Red</span>
+        </div>
+        <div style="padding:6px 16px;display:flex;align-items:center;gap:8px;cursor:pointer;" onmouseenter="this.style.background='#3a3a3a'" onmouseleave="this.style.background='transparent'">
+          <div style="width:12px;height:12px;border-radius:50%;background:#888;flex-shrink:0;"></div>
+          <span style="font-size:13px;color:#ddd;">灰色</span>
+        </div>
+        <div style="padding:6px 16px;display:flex;align-items:center;gap:8px;cursor:pointer;" onmouseenter="this.style.background='#3a3a3a'" onmouseleave="this.style.background='transparent'">
+          <div style="width:12px;height:12px;border-radius:50%;background:#E53535;flex-shrink:0;"></div>
+          <span style="font-size:13px;color:#ddd;">紅色</span>
+        </div>
+      </div>
+
+      <!-- File area -->
+      <div style="flex:1;background:#2b2b2b;padding:20px;overflow-y:auto;">
+        <!-- PDF file icon -->
+        <div id="finderFile" onclick="selectFinderFile()" ondblclick="openFinderFile()" style="display:inline-flex;flex-direction:column;align-items:center;gap:6px;padding:8px;border-radius:6px;cursor:pointer;width:80px;">
+          <div style="width:52px;height:64px;position:relative;">
+            <svg width="52" height="64" viewBox="0 0 52 64" fill="none">
+              <path d="M4 0 H36 L52 16 V60 Q52 64 48 64 H4 Q0 64 0 60 V4 Q0 0 4 0Z" fill="#f0f0f0"/>
+              <path d="M36 0 L52 16 H40 Q36 16 36 12 Z" fill="#ccc"/>
+              <text x="8" y="44" font-size="9" font-weight="700" fill="#E53535" font-family="Arial">PDF</text>
+            </svg>
+          </div>
+          <span id="finderFileName" style="font-size:11px;color:#ddd;text-align:center;word-break:break-all;">test.pdf</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Footer buttons -->
+    <div style="background:#3a3a3a;border-top:1px solid #1a1a1a;padding:10px 16px;display:flex;justify-content:space-between;align-items:center;">
+      <button style="background:#555;border:none;border-radius:6px;padding:6px 14px;font-size:13px;color:#ddd;cursor:pointer;font-family:inherit;">顯示選項</button>
+      <div style="display:flex;gap:8px;">
+        <button onclick="closeFinderModal()" style="background:#555;border:none;border-radius:6px;padding:6px 18px;font-size:13px;color:#ddd;cursor:pointer;font-family:inherit;">取消</button>
+        <button onclick="openFinderFile()" style="background:#555;border:none;border-radius:6px;padding:6px 18px;font-size:13px;color:#ddd;cursor:pointer;font-family:inherit;">打開</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Mac Finder Modal -->
+<div id="finderModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:2000;align-items:center;justify-content:center;">
+  <div style="width:620px;height:380px;background:#2b2b2b;border-radius:12px;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,0.5);display:flex;flex-direction:column;">
+    <!-- Toolbar -->
+    <div style="background:#3a3a3a;padding:10px 14px;display:flex;align-items:center;gap:10px;border-bottom:1px solid #222;">
+      <div style="display:flex;gap:4px;">
+        <div style="width:12px;height:12px;border-radius:50%;background:#FF5F57;"></div>
+        <div style="width:12px;height:12px;border-radius:50%;background:#FFBD2E;"></div>
+        <div style="width:12px;height:12px;border-radius:50%;background:#28C840;"></div>
+      </div>
+      <div style="display:flex;gap:4px;margin-left:8px;">
+        <div style="background:#555;border-radius:4px;padding:3px 8px;cursor:pointer;"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#ccc" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg></div>
+        <div style="background:#555;border-radius:4px;padding:3px 8px;cursor:pointer;"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#ccc" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg></div>
+      </div>
+      <div style="display:flex;gap:4px;">
+        <div style="background:#555;border-radius:4px;padding:3px 10px;cursor:pointer;font-size:11px;color:#ccc;">⊞</div>
+        <div style="background:#555;border-radius:4px;padding:3px 10px;cursor:pointer;font-size:11px;color:#ccc;">⊟</div>
+      </div>
+      <div style="background:#444;border-radius:6px;padding:4px 12px;margin:0 8px;display:flex;align-items:center;gap:6px;flex:0 0 auto;">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="#4A9EF5"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+        <span style="font-size:12px;color:#ccc;">範本</span>
+        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#aaa" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+      </div>
+      <div style="flex:1;"></div>
+      <div style="background:#3a3a3a;border:1px solid #555;border-radius:6px;padding:4px 12px;display:flex;align-items:center;gap:6px;">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#aaa" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <span style="font-size:12px;color:#666;">搜尋</span>
+      </div>
+    </div>
+
+    <!-- Body -->
+    <div style="display:flex;flex:1;overflow:hidden;">
+      <!-- Sidebar -->
+      <div style="width:160px;background:#2b2b2b;border-right:1px solid #222;padding:12px 0;flex-shrink:0;overflow-y:auto;">
+        <div style="padding:2px 12px;font-size:10px;color:#888;font-weight:600;letter-spacing:0.5px;margin-bottom:4px;">喜好項目</div>
+        <div style="display:flex;align-items:center;gap:8px;padding:5px 12px;cursor:pointer;border-radius:4px;margin:0 4px;">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="#4A9EF5"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+          <span style="font-size:12px;color:#ccc;">下載項目</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;padding:5px 12px;cursor:pointer;border-radius:4px;margin:0 4px;">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="#4A9EF5"><rect x="2" y="3" width="20" height="14" rx="2"/></svg>
+          <span style="font-size:12px;color:#ccc;">桌面</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;padding:5px 12px;cursor:pointer;border-radius:4px;margin:0 4px;">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#4A9EF5" stroke-width="2"><path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/></svg>
+          <span style="font-size:12px;color:#ccc;">文件</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;padding:5px 12px;cursor:pointer;border-radius:4px;margin:0 4px;">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="#4A9EF5"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>
+          <span style="font-size:12px;color:#ccc;">應用程式</span>
+        </div>
+        <div style="padding:2px 12px;font-size:10px;color:#888;font-weight:600;letter-spacing:0.5px;margin:10px 0 4px;">iCloud</div>
+        <div style="display:flex;align-items:center;gap:8px;padding:5px 12px;cursor:pointer;border-radius:4px;margin:0 4px;">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#4A9EF5" stroke-width="2"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"/></svg>
+          <span style="font-size:12px;color:#ccc;">iCloud 雲碟</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;padding:5px 12px;cursor:pointer;border-radius:4px;margin:0 4px;">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#4A9EF5" stroke-width="2"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>
+          <span style="font-size:12px;color:#ccc;">已共享</span>
+        </div>
+        <div style="padding:2px 12px;font-size:10px;color:#888;font-weight:600;letter-spacing:0.5px;margin:10px 0 4px;">位置</div>
+        <div style="display:flex;align-items:center;gap:8px;padding:5px 12px;cursor:pointer;border-radius:4px;margin:0 4px;">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#aaa" stroke-width="1.5"><rect x="2" y="2" width="20" height="20" rx="3"/></svg>
+          <span style="font-size:12px;color:#ccc;">Antigravity</span>
+          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#666" stroke-width="2" style="margin-left:auto;"><polyline points="18 15 12 9 6 15"/></svg>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;padding:5px 12px;cursor:pointer;border-radius:4px;margin:0 4px;">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#aaa" stroke-width="1.5"><rect x="2" y="2" width="20" height="20" rx="3"/></svg>
+          <span style="font-size:12px;color:#ccc;">Claude</span>
+          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#666" stroke-width="2" style="margin-left:auto;"><polyline points="18 15 12 9 6 15"/></svg>
+        </div>
+        <div style="padding:2px 12px;font-size:10px;color:#888;font-weight:600;letter-spacing:0.5px;margin:10px 0 4px;">標籤</div>
+        <div style="display:flex;align-items:center;gap:8px;padding:5px 12px;cursor:pointer;border-radius:4px;margin:0 4px;">
+          <div style="width:12px;height:12px;border-radius:50%;background:#FF5F57;flex-shrink:0;"></div>
+          <span style="font-size:12px;color:#ccc;">Red</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;padding:5px 12px;cursor:pointer;border-radius:4px;margin:0 4px;">
+          <div style="width:12px;height:12px;border-radius:50%;background:#888;flex-shrink:0;"></div>
+          <span style="font-size:12px;color:#ccc;">灰色</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;padding:5px 12px;cursor:pointer;border-radius:4px;margin:0 4px;">
+          <div style="width:12px;height:12px;border-radius:50%;background:#FF5F57;flex-shrink:0;"></div>
+          <span style="font-size:12px;color:#ccc;">紅色</span>
+        </div>
+      </div>
+
+      <!-- File area -->
+      <div style="flex:1;background:#2b2b2b;padding:20px;display:flex;flex-direction:column;">
+        <!-- PDF file icon -->
+        <div id="finderFileItem" onclick="selectFinderFile(this)" style="display:inline-flex;flex-direction:column;align-items:center;gap:6px;padding:8px;border-radius:6px;cursor:pointer;width:80px;">
+          <div style="width:52px;height:64px;position:relative;">
+            <svg width="52" height="64" viewBox="0 0 52 64" fill="none">
+              <path d="M4 0h32l16 16v44a4 4 0 0 1-4 4H4a4 4 0 0 1-4-4V4a4 4 0 0 1 4-4z" fill="#f0f0f0"/>
+              <path d="M36 0l16 16H36V0z" fill="#bbb"/>
+              <text x="8" y="44" font-size="9" fill="#E53535" font-weight="700" font-family="sans-serif">PDF</text>
+            </svg>
+          </div>
+          <span style="font-size:11px;color:#ccc;text-align:center;">test.pdf</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <div style="background:#3a3a3a;border-top:1px solid #222;padding:10px 14px;display:flex;align-items:center;justify-content:space-between;">
+      <button style="background:#555;border:none;border-radius:5px;padding:5px 14px;font-size:12px;color:#ccc;cursor:pointer;">顯示選項</button>
+      <div style="display:flex;gap:8px;">
+        <button onclick="closeFinderModal()" style="background:#555;border:none;border-radius:5px;padding:5px 14px;font-size:12px;color:#ccc;cursor:pointer;">取消</button>
+        <button id="finderOpenBtn" onclick="openFinderFile()" style="background:#555;border:none;border-radius:5px;padding:5px 14px;font-size:12px;color:#ccc;cursor:pointer;opacity:0.5;">打開</button>
+      </div>
+    </div>
+  </div>
+</div>
+<!-- ===== Completed documents grid + password reveal (added) ===== -->
+<script>
+(function(){
+  var EYE = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>';
+  var EYE_OFF = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>';
+  function hide(btn){ var d=btn.parentNode.querySelector(".doc-pw"); d.classList.remove("shown"); d.textContent=d.getAttribute("data-mask"); btn.classList.remove("active"); btn.innerHTML=EYE; btn.setAttribute("aria-label","長按顯示密碼"); }
+  function show(btn){ var d=btn.parentNode.querySelector(".doc-pw"); d.classList.add("shown"); d.textContent=d.getAttribute("data-pw"); btn.classList.add("active"); btn.innerHTML=EYE_OFF; btn.setAttribute("aria-label","放開隱藏密碼"); }
+  var eyes=document.querySelectorAll("#docGrid .doc-eye");
+  Array.prototype.forEach.call(eyes, function(btn){
+    btn.addEventListener("mousedown", function(e){ e.preventDefault(); show(btn); });
+    btn.addEventListener("mouseup", function(){ hide(btn); });
+    btn.addEventListener("mouseleave", function(){ hide(btn); });
+    btn.addEventListener("touchstart", function(e){ e.preventDefault(); show(btn); }, {passive:false});
+    btn.addEventListener("touchend", function(e){ e.preventDefault(); hide(btn); });
+    btn.addEventListener("touchcancel", function(){ hide(btn); });
+  });
+  document.addEventListener("mouseup", function(){ Array.prototype.forEach.call(document.querySelectorAll("#docGrid .doc-eye.active"), function(b){ hide(b); }); });
+})();
+</script>
+</body>
+</html>
